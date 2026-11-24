@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { Rail } from '@/components/shell/Rail';
 import { MobileFilters } from '@/components/shell/MobileFilters';
+import { FilterMemory } from '@/components/shell/FilterMemory';
 import { TopBar } from '@/components/shell/TopBar';
 import { ErrorState } from '@/components/ui';
 import { serverApi, type StaffMe } from '@/lib/server-api';
@@ -48,6 +49,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
         </div>
       </div>
       <Suspense fallback={null}>
+        <FilterMemory />
         {!partner && <UserPane />}
         <EventPane />
       </Suspense>

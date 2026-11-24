@@ -25,7 +25,7 @@ interface Org360 {
   members: { userId: number | null; name: string | null; email: string | null; isOwner: boolean; isActive: boolean; imageUrl?: string | null }[];
   events: { total: number; upcoming: number; live: number; recent: { id: number; name: string; startDate: string; endDate: string; country: string | null; sold: number; capacity: number }[] };
   money: { currency: string; gmv: number; payments: number; commission: number; takeRate: number | null; failed: number; withdrawn: number; points: { t: string; v: number }[] };
-  wallets: { currency: string; provider: string | null; balance: number; lockedBalance: number; status: string | null }[];
+  wallets: { currency: string; provider: string | null; balance: number; status: string | null }[];
   commissionRequests: { id: number; status: string; percentage: number; reason: string | null; createdAt: string }[];
   recentTransactions: { id: number; createdAt: string; amount: number; currency: string; status: string; transactionType: string; correspondent: string | null }[];
 }
@@ -123,7 +123,6 @@ export default function OrganizerPage() {
                     <span className="text-ink-secondary">{humanize(w.provider)}</span>
                     <span className="num text-ink">
                       {fmt('money', w.balance, w.currency)}
-                      {w.lockedBalance > 0 && <span className="ml-2 text-[12px] text-ink-muted">{fmt('money', w.lockedBalance, w.currency, true)} locked</span>}
                     </span>
                   </li>
                 ))}

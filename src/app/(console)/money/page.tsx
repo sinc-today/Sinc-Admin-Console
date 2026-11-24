@@ -176,9 +176,8 @@ function Collections() {
 /* ------------------------------------------------------------------ Payouts */
 interface PayoutsData {
   paidOut: Kpi;
-  wallets: { provider: string; currency: string; wallets: number; balance: number; locked: number }[];
+  wallets: { provider: string; currency: string; wallets: number; balance: number }[];
   owed: number;
-  locked: number;
   byStatus: { status: string; count: number; amount: number }[];
   failed: TxRow[];
 }
@@ -190,10 +189,9 @@ function Payouts() {
   const st = (s: string) => d?.byStatus.find((b) => b.status === s);
   return (
     <>
-      <section aria-label="Key numbers" className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
+      <section aria-label="Key numbers" className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3">
         <MetricTile kpi={d?.paidOut} compareLabel="vs previous" />
         <StatTile label="Owed to organizers" value={d ? fmt('money', d.owed, currency, true) : undefined} note="Organizer wallet balances right now. Not limited to the dates at the top." />
-        <StatTile label="Locked in wallets" value={d ? fmt('money', d.locked, currency, true) : undefined} note="Held while a withdrawal is processing." />
         <StatTile
           label="Failed payouts"
           value={d ? String(st('FAILED')?.count ?? 0) : undefined}
