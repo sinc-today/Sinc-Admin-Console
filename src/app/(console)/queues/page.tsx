@@ -7,8 +7,9 @@ import { parseAsString, useQueryStates } from 'nuqs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, EmptyState, ErrorState, Field, inputClass, Panel, Skeleton, StatusBadge, Tag } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
-import { PagerBar, useClientPager } from '@/components/pager';
+import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { formatRelative } from '@/lib/format';
+import { ReasonDialog } from '@/components/EventActions';
 
 interface QueueSummary {
   key: string;
@@ -80,11 +81,23 @@ function QueueView({ queue, filter, setFilter, item, setItem }: { queue: string;
   const q = useQuery({ queryKey: ['queue', queue, filter], queryFn: () => api<QueueData>(`/queues/${queue}?filter=${filter}`), refetchInterval: 60_000 });
   const qc = useQueryClient();
   const all = useMemo(() => q.data?.items ?? [], [q.data]);
-  const pager = useClientPager(all, 25);
+  const { pager, q: search, setQ: setSearch } = useSearchPager(all, (i) => `${i.subject} ${i.subtitle} ${i.assignee?.name ?? ''} ${i.facts.map((f) => `${f.label} ${f.value ?? ''}`).join(' ')}`, 25);
   const items = pager.items;
   const idx = Math.max(0, items.findIndex((i) => i.key === item));
   const selected = items.length ? items[idx] : null;
   const listRef = useRef<HTMLUListElement>(null);
+
+  const [clearing, setClearing] = useState(false);
+  const clearAll = useMutation({
+    mutationFn: (reason: string) => api<{ cleared: number }>(`/queues/${queue}/clear`, { method: 'POST', json: { reason, filter } }),
+    meta: { success: 'Queue cleared' },
+    onSuccess: () => {
+      setClearing(false);
+      setItem(null);
+      qc.invalidateQueries({ queryKey: ['queue', queue] });
+      qc.invalidateQueries({ queryKey: ['queues'] });
+    },
+  });
 
   const assign = useMutation({
     mutationFn: (v: { key: string; to: 'me' | null }) => api(`/queues/${queue}/${encodeURIComponent(v.key)}/assign`, { method: 'POST', json: { to: v.to } }),
@@ -119,7 +132,27 @@ function QueueView({ queue, filter, setFilter, item, setItem }: { queue: string;
         title={q.data?.queue.label}
         freshness={q.data ? `${q.data.queue.description} J and K move, A assigns to you.` : undefined}
         className="min-w-0"
+        actions={
+          all.length > 0 ? (
+            <Button variant="quiet" onClick={() => setClearing(true)}>
+              Clear all
+            </Button>
+          ) : undefined
+        }
       >
+        {clearing && (
+          <ReasonDialog
+            open
+            onClose={() => setClearing(false)}
+            title={`Clear all ${all.length} item${all.length === 1 ? '' : 's'}?`}
+            description="They leave this queue for everyone. Nothing is approved, declined or changed in the app: anyone waiting stays waiting, and new items still arrive. Recorded in the audit log."
+            confirm="Clear all"
+            placeholder="e.g. Old test data"
+            onConfirm={(r) => clearAll.mutate(r)}
+            pending={clearAll.isPending}
+            error={clearAll.error}
+          />
+        )}
         <div role="group" aria-label="Show" className="mb-3 flex flex-wrap gap-1">
           {FILTERS.map((f) => (
             <button
@@ -133,12 +166,17 @@ function QueueView({ queue, filter, setFilter, item, setItem }: { queue: string;
             </button>
           ))}
         </div>
+        {all.length > 0 && (
+          <div className="mb-3">
+            <ListSearch id={`queue-q-${queue}`} value={search} onChange={setSearch} placeholder="Name, id or detail" label="Search this queue" />
+          </div>
+        )}
         {q.isLoading ? (
           <Skeleton className="h-60 w-full" />
         ) : q.error ? (
           <ErrorState message={(q.error as Error).message} requestId={(q.error as ApiError).requestId} onRetry={() => q.refetch()} />
         ) : !items.length ? (
-          <p className="py-8 text-center text-[13px] text-ink-muted">Nothing waiting here.</p>
+          <p className="py-8 text-center text-[13px] text-ink-muted">{search ? `Nothing matches “${search}”.` : "Nothing waiting here."}</p>
         ) : (
           <ul ref={listRef} className="-mx-6 flex max-h-[70vh] flex-col overflow-y-auto" aria-label={`${items.length} items`}>
             {items.map((it, i) => (

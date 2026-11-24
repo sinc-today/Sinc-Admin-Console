@@ -178,7 +178,7 @@ export default function LivePage() {
                     cursor={{ stroke: C.lineStrong }}
                     content={({ active, payload }) =>
                       active && payload?.length ? (
-                        <div className="border border-line-strong bg-canvas px-3 py-2 text-[12px]">
+                        <div className="chart-tip px-3 py-2 text-[12px]">
                           <p className="font-medium text-ink">{hhmm((payload[0].payload as { t: string }).t)}</p>
                           <p className="num text-ink">{(payload[0].payload as { ok: number }).ok} successful</p>
                           <p className="num text-ink-muted">{(payload[0].payload as { attempts: number }).attempts} attempts</p>

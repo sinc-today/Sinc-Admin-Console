@@ -1,10 +1,11 @@
 'use client';
 
-import { CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, MagnifyingGlass } from '@phosphor-icons/react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
+import { inputClass } from './ui';
 
 export const PAGE_SIZES = [25, 50, 100] as const;
 
@@ -177,5 +178,47 @@ export function PagerBar<T>({ pager, noun = 'rows', sizes = PAGE_SIZES as unknow
         </button>
       </div>
     </nav>
+  );
+}
+
+const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+/**
+ * Search + pages over a list already in memory: every word typed must appear in the row's text
+ * (case and accents ignored). Use with <ListSearch> and <PagerBar>.
+ */
+export function useSearchPager<T>(all: T[], text: (row: T) => string, initialSize = 25) {
+  const [q, setQ] = useState('');
+  const filtered = useMemo(() => {
+    const words = norm(q).split(/\s+/).filter(Boolean);
+    if (!words.length) return all;
+    return all.filter((row) => {
+      const t = norm(text(row));
+      return words.every((w) => t.includes(w));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [all, q]);
+  const pager = useClientPager(filtered, initialSize);
+  return { pager, q, setQ, matched: filtered.length, total: all.length };
+}
+
+/** The search box for useSearchPager lists. */
+export function ListSearch({ id, value, onChange, placeholder = 'Search', label = 'Search this list', className }: { id: string; value: string; onChange: (v: string) => void; placeholder?: string; label?: string; className?: string }) {
+  return (
+    <div role="search" className={`relative w-full max-w-[360px] ${className ?? ''}`}>
+      <label htmlFor={id} className="sr-only">
+        {label}
+      </label>
+      <MagnifyingGlass size={16} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
+      <input
+        id={id}
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`${inputClass} pl-9`}
+        autoComplete="off"
+      />
+    </div>
   );
 }

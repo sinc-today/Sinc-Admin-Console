@@ -107,7 +107,7 @@ export default function MarketplacePage() {
         </QueryPanel>
       </div>
 
-      <QueryPanel title="Events with no sales yet" query={none} skeleton="table" freshness="Published over 7 days ago, not ended, no tickets issued. Soonest first.">
+      <QueryPanel title="Events with no sales yet" query={none} skeleton="table" freshness="Upcoming events published over 7 days ago with no tickets issued. Soonest first.">
         {(x) =>
           x.events.length === 0 ? (
             <p className="py-2 text-[13px] text-ink-muted">Every published event has sold at least one ticket.</p>

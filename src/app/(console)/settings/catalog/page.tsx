@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { useState } from 'react';
 import { NoAccess } from '@/components/PhasePlaceholder';
 import { fmt } from '@/components/analytics-ui';
@@ -98,20 +99,7 @@ export default function CatalogPage() {
           </Button>
         }
       >
-        <ul className="flex flex-wrap gap-2">
-          {d.tags.map((t) => (
-            <li key={t.id} className="inline-flex items-center gap-1 rounded-tag bg-fog pl-3 text-[13px]">
-              {t.name}
-              <button type="button" className="h-7 px-2 text-ink-secondary hover:text-ink" onClick={() => setEdit({ kind: 'tag', id: t.id, name: t.name })} aria-label={`Rename ${t.name}`}>
-                Edit
-              </button>
-              <button type="button" className="h-7 pr-3 text-ink-secondary hover:text-ember-ink" onClick={() => setEdit({ kind: 'delete-tag', id: t.id, name: t.name })} aria-label={`Delete ${t.name}`}>
-                Delete
-              </button>
-            </li>
-          ))}
-          {!d.tags.length && <li className="text-[13px] text-ink-muted">No tags yet.</li>}
-        </ul>
+        <TagList tags={d.tags} onEdit={(t) => setEdit({ kind: 'tag', id: t.id, name: t.name })} onDelete={(t) => setEdit({ kind: 'delete-tag', id: t.id, name: t.name })} />
         {inPanel('tag') && editor}
       </Panel>
 
@@ -259,5 +247,34 @@ function Editor({ edit, onDone }: { edit: Edit; onDone: () => void }) {
         </Button>
       </div>
     </form>
+  );
+}
+
+function TagList({ tags, onEdit, onDelete }: { tags: { id: number; name: string }[]; onEdit: (t: { id: number; name: string }) => void; onDelete: (t: { id: number; name: string }) => void }) {
+  const { pager, q, setQ } = useSearchPager(tags, (t) => t.name, 60);
+  return (
+    <>
+      {tags.length > 10 && (
+        <div className="mb-3">
+          <ListSearch id="tags-q" value={q} onChange={setQ} placeholder="Find a tag" label="Search tags" />
+        </div>
+      )}
+      <ul className="flex flex-wrap gap-2">
+        {pager.items.map((t) => (
+          <li key={t.id} className="inline-flex items-center gap-1 rounded-tag bg-fog pl-3 text-[13px]">
+            {t.name}
+            <button type="button" className="h-7 px-2 text-ink-secondary hover:text-ink" onClick={() => onEdit(t)} aria-label={`Rename ${t.name}`}>
+              Edit
+            </button>
+            <button type="button" className="h-7 pr-3 text-ink-secondary hover:text-ember-ink" onClick={() => onDelete(t)} aria-label={`Delete ${t.name}`}>
+              Delete
+            </button>
+          </li>
+        ))}
+        {!tags.length && <li className="text-[13px] text-ink-muted">No tags yet.</li>}
+        {!!tags.length && !pager.items.length && <li className="text-[13px] text-ink-muted">No tag matches “{q}”.</li>}
+      </ul>
+      <PagerBar pager={pager} noun="tags" sizes={[60, 120, 240]} />
+    </>
   );
 }

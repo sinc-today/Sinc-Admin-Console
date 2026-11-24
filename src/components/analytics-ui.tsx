@@ -173,7 +173,7 @@ export function TrendChart({ series, height = 320, compareLabel = 'Previous peri
                   const p = payload[0].payload as Series['points'][number];
                   const delta = p.v !== null && p.cmpV ? (p.v - p.cmpV) / Math.abs(p.cmpV) : null;
                   return (
-                    <div className="border border-line-strong bg-canvas px-3 py-2 text-[12px]">
+                    <div className="chart-tip px-3 py-2 text-[12px]">
                       <p className="font-medium text-ink">{shortDay(p.t)}</p>
                       <p className="num text-ink">{fmt(series.unit, p.v, series.currency)}</p>
                       {p.cmpT && (

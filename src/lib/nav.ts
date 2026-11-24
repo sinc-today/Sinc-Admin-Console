@@ -8,7 +8,6 @@ import {
   Storefront,
   TrendUp,
   Heart,
-  MapTrifold,
   Tray,
   Pulse,
   Megaphone,
@@ -46,7 +45,7 @@ export interface NavGroup {
 }
 
 /** Pages whose data the date / compare / country / currency filters change. */
-const SCOPED = ['/market', '/money', '/partners', '/portal', '/', '/marketplace', '/growth', '/engagement', '/map', '/transactions', '/organizers'];
+const SCOPED = ['/market', '/money', '/partners', '/portal', '/', '/marketplace', '/growth', '/engagement', '/transactions', '/organizers'];
 export const isScoped = (pathname: string) =>
   SCOPED.some((p) => (p === '/' ? pathname === '/' : pathname === p || pathname.startsWith(`${p}/`))) &&
   !/^\/transactions\/./.test(pathname) &&
@@ -76,7 +75,6 @@ export const NAV: NavGroup[] = [
       { href: '/growth', label: 'Growth', icon: TrendUp, permission: 'analytics.read', phase: 0, description: 'Signups, active users, retention and the purchase funnel.' },
       { href: '/engagement', label: 'Engagement', icon: Heart, permission: 'analytics.read', phase: 0, description: 'Posts, likes, comments, search and push.' },
       { href: '/marketplace', label: 'Marketplace', icon: Storefront, permission: 'analytics.read', phase: 0, description: 'Events on sale, sell-through and affiliates.' },
-      { href: '/map', label: 'Map', icon: MapTrifold, permission: 'analytics.read', phase: 0, description: 'Events, sales and audience by area.' },
     ],
   },
   {

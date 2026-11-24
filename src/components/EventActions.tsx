@@ -11,7 +11,7 @@ import { Modal } from './Modal';
 import { Button, Field, inputClass, Skeleton } from './ui';
 
 /** A short confirm-with-reason dialog for one staff action. */
-function ReasonDialog({
+export function ReasonDialog({
   open,
   onClose,
   title,
@@ -146,6 +146,7 @@ interface Generated {
   downloads: { filename: string; downloadUrl: string; sizeMB: number }[];
   expiresAt: string | null;
   ticketCount: number;
+  emailedTo?: string | null;
 }
 const designName = (t: string) => (t === 'default' ? 'Standard Sinc ticket' : t.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase()));
 
@@ -167,7 +168,7 @@ export function GenerateTicketsButton({ eventId, eventName, currency }: { eventI
 function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: number; eventName: string; currency?: string | null; onClose: () => void }) {
   const qc = useQueryClient();
   const opts = useQuery({ queryKey: ['generate-options', eventId], queryFn: () => api<Options>(`/events/${eventId}/generate-options`) });
-  const [f, setF] = useState({ ticketId: 0, quantity: 1, template: '', email: '', phoneNumber: '', reason: '' });
+  const [f, setF] = useState({ ticketId: 0, quantity: 1, template: '', sendTo: '', email: '', phoneNumber: '', reason: '' });
   const [done, setDone] = useState<Generated | null>(null);
   const tickets = opts.data?.tickets ?? [];
   const chosen = tickets.find((t) => t.id === f.ticketId) ?? tickets.find((t) => !t.disabled && t.left > 0);
@@ -177,7 +178,7 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
     mutationFn: () =>
       api<Generated>(`/events/${eventId}/generate-tickets`, {
         method: 'POST',
-        json: { ticketId: chosen!.id, quantity: f.quantity, template, email: f.email, phoneNumber: f.phoneNumber, reason: f.reason },
+        json: { ticketId: chosen!.id, quantity: f.quantity, template, sendTo: f.sendTo, email: f.email, phoneNumber: f.phoneNumber, reason: f.reason },
       }),
     meta: { success: 'Tickets generated' },
     onSuccess: (r) => {
@@ -187,7 +188,7 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
     },
   });
   return (
-    <Modal open onClose={onClose} title="Generate tickets" description={`${eventName}. Complimentary tickets (paid amount 0) that count against the ticket type's capacity. You download them as PDF files in a ZIP.`} width="max-w-[600px]">
+    <Modal open onClose={onClose} title="Generate tickets" description={`${eventName}. Complimentary tickets (paid amount 0) that count against the ticket type's capacity. You download them as PDF files in a ZIP, and can have the ZIP emailed.`} width="max-w-[600px]">
       {done ? (
         <div className="flex flex-col gap-4">
           <p role="status" className="text-[16px] text-ink">
@@ -206,6 +207,11 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
               </li>
             ))}
           </ul>
+          {done.emailedTo && (
+            <p className="text-[14px] text-ink-secondary">
+              The download links were emailed to <span className="text-ink">{done.emailedTo}</span>.
+            </p>
+          )}
           {done.expiresAt && <p className="text-[12px] text-ink-muted">Download links work until {new Date(done.expiresAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}.</p>}
           <div className="flex gap-2">
             <Button onClick={onClose}>Done</Button>
@@ -213,7 +219,7 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
               variant="secondary"
               onClick={() => {
                 setDone(null);
-                setF({ ...f, reason: '' });
+                setF({ ...f, reason: '', sendTo: '' });
               }}
             >
               Generate more
@@ -269,6 +275,9 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
               </select>
             </Field>
           </div>
+          <Field label="Email the ZIP to (optional)" htmlFor="gt-send" helper="We email the download links to this address as soon as the tickets are ready.">
+            <input id="gt-send" type="email" autoComplete="email" className={inputClass} value={f.sendTo} onChange={(e) => setF({ ...f, sendTo: e.target.value })} placeholder="name@example.com" />
+          </Field>
           <details className="text-[13px]">
             <summary className="cursor-pointer text-ink-secondary hover:text-ink">Who they’re for (optional)</summary>
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -279,7 +288,7 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
                 <input id="gt-phone" className={inputClass} value={f.phoneNumber} onChange={(e) => setF({ ...f, phoneNumber: e.target.value })} placeholder="+250…" />
               </Field>
             </div>
-            <p className="mt-2 text-[12px] text-ink-muted">Saved on the order so the tickets can be found and resent later. Nothing is sent now; you download the files.</p>
+            <p className="mt-2 text-[12px] text-ink-muted">Saved on the order so the tickets can be found and resent later. These details alone don’t send anything.</p>
           </details>
           <Field label="Reason (audit log)" htmlFor="gt-reason">
             <input id="gt-reason" required minLength={5} className={inputClass} value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} placeholder="e.g. Sponsor guest list" />

@@ -297,6 +297,15 @@ export function FilterBar({
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
+        {active.length > 0 && (
+          <button
+            type="button"
+            onClick={() => (onClearAll ? onClearAll() : active.forEach((f) => f.onRemove()))}
+            className="inline-flex h-10 items-center gap-1.5 px-3 text-[13px] font-medium text-ink-secondary hover:bg-fog hover:text-ink"
+          >
+            <X size={14} aria-hidden /> Clear filters
+          </button>
+        )}
         {actions && <div className="ml-auto flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
       {active.length > 0 && (
@@ -308,13 +317,6 @@ export function FilterBar({
               </button>
             </li>
           ))}
-          {onClearAll && active.length > 1 && (
-            <li>
-              <button type="button" onClick={onClearAll} className="text-[12px] text-ink-secondary underline underline-offset-4 hover:text-ink">
-                Clear all
-              </button>
-            </li>
-          )}
         </ul>
       )}
     </div>

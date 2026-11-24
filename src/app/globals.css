@@ -288,3 +288,29 @@ tbody tr:has(a[data-row-link]):hover a[data-row-link] {
   .card-link:hover { transform: none; }
   a, button, [role='button'] { transition-duration: 0ms !important; }
 }
+
+/* Chart hover tooltips: inverted (dark on light, light on dark) so they stand out from the panel they sit on. */
+.chart-tip,
+.recharts-default-tooltip {
+  background: var(--ink) !important;
+  color: var(--surface-canvas) !important;
+  border: 1px solid var(--ink) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.28) !important;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  line-height: 1.45;
+}
+.chart-tip *,
+.recharts-default-tooltip .recharts-tooltip-label,
+.recharts-default-tooltip .recharts-tooltip-item {
+  color: var(--surface-canvas) !important;
+}
+.recharts-default-tooltip .recharts-tooltip-label {
+  font-weight: 600;
+  margin-bottom: 2px !important;
+}
+.chart-tip .text-ink-muted,
+.chart-tip .text-ink-secondary {
+  opacity: 0.75;
+}

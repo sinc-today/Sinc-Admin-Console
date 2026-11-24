@@ -3,7 +3,8 @@
 import { Avatar } from '@/components/Avatar';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { Modal } from '@/components/Modal';
 import { NoAccess } from '@/components/PhasePlaceholder';
 import { dayFmt, Table, td, tdFirst, tdLast } from '@/components/directory-ui';
@@ -44,9 +45,10 @@ export default function MarketTeamPage() {
     meta: { success: 'Role changed' },
     onSuccess: refresh,
   });
+  const active = useMemo(() => (q.data?.items ?? []).filter((m) => m.status === 'ACTIVE'), [q.data]);
+  const { pager, q: search, setQ: setSearch } = useSearchPager(active, (m) => `${m.name} ${m.email} ${m.role ?? ''}`, 25);
   if (!can) return <NoAccess />;
   const roles = q.data?.roles ?? [];
-  const active = (q.data?.items ?? []).filter((m) => m.status === 'ACTIVE');
   const former = (q.data?.items ?? []).filter((m) => m.status !== 'ACTIVE');
 
   return (
@@ -69,8 +71,12 @@ export default function MarketTeamPage() {
         ) : q.error ? (
           <ErrorState what="your team" message={(q.error as Error).message} requestId={(q.error as ApiError).requestId} onRetry={() => q.refetch()} />
         ) : (
+          <>
+          <div className="mb-4">
+            <ListSearch id="mteam-q" value={search} onChange={setSearch} placeholder="Name, email or role" label="Search your team" />
+          </div>
           <Table minWidth={720} head={['Name', 'Role', 'Two-factor', 'Last sign-in', '']}>
-            {active.map((m) => (
+            {pager.items.map((m) => (
               <tr key={m.id} className="h-12 border-b border-line">
                 <td className={tdFirst}>
                   <div className="flex items-center gap-3">
@@ -113,6 +119,9 @@ export default function MarketTeamPage() {
               </tr>
             ))}
           </Table>
+          {!pager.items.length && search && <p className="py-2 text-[13px] text-ink-muted">No one matches “{search}”.</p>}
+          <PagerBar pager={pager} noun="people" />
+          </>
         )}
         {changeRole.error && <p className="mt-2 text-[12px] text-ember-ink">{(changeRole.error as Error).message}</p>}
         {former.length > 0 && (
@@ -150,7 +159,7 @@ function RoleLegend({ roles }: { roles: TeamData['roles'] }) {
 }
 
 function InviteModal({ open, onClose, roles, suffix, onDone }: { open: boolean; onClose: () => void; roles: TeamData['roles']; suffix: string; onDone: () => void }) {
-  const [f, setF] = useState({ email: '', name: '', role: 'partner_ops' });
+  const [f, setF] = useState({ email: '', name: '', role: 'partner_owner' });
   const [result, setResult] = useState<{ accountCreated: boolean; emailSent: boolean; emailError: string | null } | null>(null);
   const m = useMutation({
     mutationFn: () => api<{ accountCreated: boolean; emailSent: boolean; emailError: string | null }>(`/market/team${suffix}`, { method: 'POST', json: { email: f.email, name: f.name || null, role: f.role } }),
@@ -162,7 +171,7 @@ function InviteModal({ open, onClose, roles, suffix, onDone }: { open: boolean; 
   });
   const close = () => {
     setResult(null);
-    setF({ email: '', name: '', role: 'partner_ops' });
+    setF({ email: '', name: '', role: 'partner_owner' });
     m.reset();
     onClose();
   };

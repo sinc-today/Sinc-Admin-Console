@@ -13,10 +13,10 @@ import { api, ApiError } from '@/lib/api';
 import { C, axisTick } from '@/lib/chart-theme';
 import { formatDateTime } from '@/lib/format';
 import { Flyer } from '@/components/Flyer';
-import { FeePayerPanel, type FeePayer } from '@/components/FeePayer';
+import { EventSettingsPanel, type FeePayer } from '@/components/FeePayer';
 import { ResendTicketsButton } from '@/components/ResendTickets';
 import { EventAttendees } from '@/components/EventAttendees';
-import { EventPrivacyButton, FeatureEventButton, GenerateTicketsButton } from '@/components/EventActions';
+import { GenerateTicketsButton } from '@/components/EventActions';
 import { useCan } from '../../me-context';
 
 interface Event360 {
@@ -48,6 +48,8 @@ interface Event360 {
   money: { currency: string; gmv: number; payments: number; failed: number }[];
   linkedTransactions: number;
   rank: { position: number; of: number; processed: number } | null;
+  collaborators?: { id: number; userId: number | null; name: string; organizerProfileId: number | null; isHost: boolean; percentage: number; valueGiver: boolean; since: string }[];
+  pendingCollaborators?: { id: number; email: string; percentage: number; invitedAt: string }[];
 }
 
 const shortDay = (d: string) => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${d.slice(0, 10)}T00:00:00Z`));
@@ -99,18 +101,18 @@ export default function EventPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <StatusBadge status={status[0]}>{status[1]}</StatusBadge>
+            {e.currency && <Tag>Charges in {e.currency}</Tag>}
             {e.category && <Tag>{e.category}</Tag>}
             {e.privacy === 'PRIVATE' && <Tag>Private</Tag>}
             {e.setup === 'VIRTUAL' && <Tag>Virtual</Tag>}
             {e.feePayer === 'BUYER' && <Tag>Buyer pays fee</Tag>}
             {e.isFeatured && <Tag>Featured</Tag>}
+            {!!d.collaborators?.length && <Tag>Collaboration · {d.collaborators.length}</Tag>}
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <ResendTicketsButton eventId={e.id} eventName={e.name} />
           <GenerateTicketsButton eventId={e.id} eventName={e.name} currency={e.currency} />
-          <FeatureEventButton eventId={e.id} featured={!!e.isFeatured} />
-          <EventPrivacyButton eventId={e.id} privacy={e.privacy} />
         </div>
         <div className="mt-6">
           <Facts
@@ -127,9 +129,11 @@ export default function EventPage() {
         </div>
       </Panel>
 
-      <EventAttendees eventId={e.id} eventName={e.name} totals={{ sold: d.totals.sold, scanned: d.totals.scanned }} />
+      {(!!d.collaborators?.length || !!d.pendingCollaborators?.length) && <Collaborators list={d.collaborators ?? []} pending={d.pendingCollaborators ?? []} />}
 
-      <FeePayerPanel eventId={e.id} value={e.feePayer ?? 'ORGANIZER'} />
+      <EventSettingsPanel eventId={e.id} feePayer={e.feePayer ?? 'ORGANIZER'} privacy={e.privacy} featured={!!e.isFeatured} />
+
+      <EventAttendees eventId={e.id} eventName={e.name} totals={{ sold: d.totals.sold, scanned: d.totals.scanned }} />
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[3fr_2fr]">
         <Panel title="Cumulative tickets issued" freshness={`Per day in ${e.tz.replace('Africa/', '')} time, since sales opened.`}>
@@ -214,5 +218,50 @@ export default function EventPage() {
       </div>
       <p className="text-[12px] text-ink-muted">Created {dayFmt(e.createdAt)}. {d.linkedTransactions.toLocaleString('en')} payments linked to this event.</p>
     </div>
+  );
+}
+
+function Collaborators({ list, pending }: { list: NonNullable<Event360['collaborators']>; pending: NonNullable<Event360['pendingCollaborators']> }) {
+  const assigned = list.reduce((a, c) => a + c.percentage, 0);
+  const rest = Math.max(0, 100 - assigned);
+  return (
+    <Panel title="Collaborators" info="Organizers this event's sales are shared with, and the percentage each one gets. The value giver is the collaborator whose share is used to price each ticket's split.">
+      <div className="mb-4 flex h-3 w-full overflow-hidden rounded-pill bg-fog" role="img" aria-label={list.map((c) => `${c.name} ${c.percentage}%`).join(', ')}>
+        {list.map((c, i) => (
+          <span key={c.id} style={{ width: `${Math.min(100, c.percentage)}%`, opacity: 1 - (i % 4) * 0.2 }} className="h-full border-r border-canvas bg-ink last:border-r-0" />
+        ))}
+      </div>
+      <ul className="flex flex-col">
+        {list.map((c) => (
+          <li key={c.id} className="flex items-center justify-between gap-3 border-b border-line py-2.5 text-[14px] last:border-b-0">
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="truncate text-ink">{c.organizerProfileId ? <RowLink href={`/organizers/${c.organizerProfileId}`}>{c.name}</RowLink> : c.name}</span>
+              {c.isHost && <Tag>Host</Tag>}
+              {c.valueGiver && <Tag>Value giver</Tag>}
+            </span>
+            <span className="num shrink-0 text-[20px] font-medium text-ink">{c.percentage.toLocaleString('en', { maximumFractionDigits: 2 })}%</span>
+          </li>
+        ))}
+        {list.length > 0 && rest > 0 && (
+          <li className="flex items-center justify-between gap-3 py-2.5 text-[13px] text-ink-secondary">
+            <span>Not given to a collaborator</span>
+            <span className="num">{rest.toLocaleString('en', { maximumFractionDigits: 2 })}%</span>
+          </li>
+        )}
+      </ul>
+      {pending.length > 0 && (
+        <div className="mt-3 border-t border-line pt-3">
+          <p className="mb-2 text-[12px] font-medium text-ink-secondary">Invited, not accepted yet</p>
+          <ul className="flex flex-col gap-1.5 text-[13px]">
+            {pending.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-3">
+                <span className="truncate text-ink">{p.email}</span>
+                <span className="num shrink-0 text-ink-secondary">{p.percentage}%</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Panel>
   );
 }

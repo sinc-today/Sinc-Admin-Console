@@ -2,7 +2,7 @@
 
 import { Avatar } from '@/components/Avatar';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PagerBar, useClientPager } from '@/components/pager';
+import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { useState } from 'react';
 import { NoAccess } from '@/components/PhasePlaceholder';
 import { Button, EmptyState, ErrorState, Field, InfoTip, inputClass, Panel, Skeleton, StatusBadge, Tag } from '@/components/ui';
@@ -112,9 +112,13 @@ function TableSkeleton({ rows = 3 }: { rows?: number }) {
 function StaffTable({ rows, roles, canManage }: { rows: StaffRow[]; roles: RoleRow[]; canManage: boolean }) {
   const me = useMe();
   const [editing, setEditing] = useState<number | null>(null);
-  const pager = useClientPager(rows);
+  const { pager, q, setQ, matched } = useSearchPager(rows, (s) => `${s.displayName} ${s.email} ${s.role?.name ?? ''} ${s.status}`);
   return (
     <>
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <ListSearch id="staff-q" value={q} onChange={setQ} placeholder="Name, email or role" label="Search staff" />
+      {q && <span className="text-[12px] text-ink-muted">{matched} of {rows.length}</span>}
+    </div>
     <div className="relative -mx-6 overflow-x-auto">
       <table className="w-full min-w-[820px] border-collapse text-[13px]">
         <thead>
@@ -299,7 +303,7 @@ function AddStaff({ roles }: { roles: RoleRow[] }) {
             add.mutate();
           }}
         >
-          <Field label="Email" htmlFor="add-email" helper="Needs a Sinc account with the ADMIN access role. They set up 2FA on first sign-in.">
+          <Field label="Email" htmlFor="add-email" helper="Their Sinc account email. Admin access is given automatically; they set up two-factor on first sign-in.">
             <input id="add-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="name@sinc.today" />
           </Field>
           <Field label="Role" htmlFor="add-role">

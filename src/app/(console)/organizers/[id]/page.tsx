@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { Avatar } from '@/components/Avatar';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -11,12 +12,14 @@ import { WithdrawalsSwitch } from '@/components/WithdrawalsSwitch';
 import { VerifyOrganizerButtons } from '@/components/VerifyOrganizer';
 import { OrganizerDocumentsPanel } from '@/components/OrganizerDocuments';
 import { MiniLine, fmt, humanize } from '@/components/analytics-ui';
-import { ExportButton, Facts, RowLink, Table, dayFmt, td, tdFirst, tdLast, verificationBadge, OpenCell } from '@/components/directory-ui';
+import { ExportButton, Facts, RowLink, Table, dayFmt, td, tdFirst, tdLast, verificationBadge, OpenCell, SearchForm } from '@/components/directory-ui';
 import { ErrorState, Panel, Skeleton, StatusBadge, Tag } from '@/components/ui';
 import { useScopeParams } from '@/lib/analytics';
 import { api, ApiError } from '@/lib/api';
 import { formatRelative } from '@/lib/format';
 import { PagerBar, useCursorPager } from '@/components/pager';
+import { OrganizerTeam } from '@/components/OrganizerTeam';
+import { OrganizerCommissionPanel, type OrganizerPlan } from '@/components/OrganizerCommission';
 import { useCan } from '../../me-context';
 
 interface Org360 {
@@ -26,6 +29,7 @@ interface Org360 {
   events: { total: number; upcoming: number; live: number; recent: { id: number; name: string; startDate: string; endDate: string; country: string | null; sold: number; capacity: number }[] };
   money: { currency: string; gmv: number; payments: number; commission: number; takeRate: number | null; failed: number; withdrawn: number; points: { t: string; v: number }[] };
   wallets: { currency: string; provider: string | null; balance: number; status: string | null }[];
+  plan?: OrganizerPlan | null;
   commissionRequests: { id: number; status: string; percentage: number; reason: string | null; createdAt: string }[];
   recentTransactions: { id: number; createdAt: string; amount: number; currency: string; status: string; transactionType: string; correspondent: string | null }[];
 }
@@ -44,6 +48,7 @@ export default function OrganizerPage() {
   const m = d.money;
   const txParams = new URLSearchParams(params);
   txParams.set('organizerProfileId', String(o.id));
+  txParams.set('currency', m.currency);
   return (
     <div className="flex flex-col gap-5">
       <nav aria-label="Breadcrumb" className="text-[13px] text-ink-secondary">
@@ -93,7 +98,7 @@ export default function OrganizerPage() {
         </div>
       </Panel>
 
-      <Panel title={`Money in this period (${m.currency})`} actions={canFinanceExport ? <ExportButton path="/exports/transactions.csv" params={txParams} label="Export transactions" /> : undefined}>
+      <Panel title={`Money in this period (${m.currency})`} info={`Shown in ${m.currency}, the currency this organizer charges in, whatever currency is picked at the top.`} actions={canFinanceExport ? <ExportButton path="/exports/transactions.csv" params={txParams} label="Export transactions" /> : undefined}>
         <Facts
           cols={6}
           items={[
@@ -129,20 +134,9 @@ export default function OrganizerPage() {
               </ul>
             )}
           </Panel>
+          <OrganizerCommissionPanel organizerId={o.id} plan={d.plan ?? null} />
           <OrganizerDocumentsPanel organizerId={o.id} />
-          <Panel title="Team">
-            <ul className="flex flex-col gap-2 text-[13px]">
-              {d.members.map((mb, i) => (
-                <li key={i} className="flex items-center justify-between gap-3">
-                  <span className="flex min-w-0 items-center gap-2.5">
-                    <Avatar src={mb.imageUrl} name={mb.name ?? (mb.userId ? `#${mb.userId}` : 'Invited')} size={28} />
-                    <span className="truncate">{mb.userId ? <RowLink href={`/users/${mb.userId}`}>{mb.name ?? `#${mb.userId}`}</RowLink> : mb.name ?? 'Invited'}</span>
-                  </span>
-                  <span className="shrink-0 text-ink-muted">{mb.isOwner ? 'owner' : mb.isActive ? 'member' : 'inactive'}</span>
-                </li>
-              ))}
-            </ul>
-          </Panel>
+          <OrganizerTeam organizerId={o.id} />
           <Panel title="Commission rate requests">
             {d.commissionRequests.length === 0 ? (
               <p className="text-[13px] text-ink-muted">None.</p>
@@ -169,12 +163,24 @@ export default function OrganizerPage() {
 
 const NO_PARAMS = new URLSearchParams();
 
+function useQParams() {
+  const [q, setQ] = useState<string | null>(null);
+  const params = useMemo(() => (q ? new URLSearchParams({ q }) : NO_PARAMS), [q]);
+  return { q, setQ, params };
+}
+
 function OrgEvents({ id, total, upcoming }: { id: number; total: number; upcoming: number }) {
-  const p = useCursorPager<{ id: number; name: string; startDate: string; sold: number; capacity: number }>(`/organizers/${id}/events`, NO_PARAMS, { urlSize: false, initialSize: 10 });
+  const { q, setQ, params } = useQParams();
+  const p = useCursorPager<{ id: number; name: string; startDate: string; sold: number; capacity: number }>(`/organizers/${id}/events`, params, { urlSize: false, initialSize: 10 });
   return (
-    <Panel title="Events" freshness={`${total} events, ${upcoming} upcoming. Newest first; sales are lifetime.`}>
+    <Panel title="Events" freshness={`${total} events, ${upcoming} upcoming. Newest first; sales are lifetime.`} busy={p.isFetching && !p.isLoading}>
+      {total > 0 && (
+        <div className="mb-3">
+          <SearchForm id={`org-ev-q-${id}`} label="Search this organizer's events" placeholder="Event name or id" initial="" onSearch={setQ} />
+        </div>
+      )}
       {p.items.length === 0 && !p.isLoading ? (
-        <p className="py-2 text-[13px] text-ink-muted">No events yet.</p>
+        <p className="py-2 text-[13px] text-ink-muted">{q ? `No event matches “${q}”.` : 'No events yet.'}</p>
       ) : (
         <Table minWidth={560} head={['Event', 'Starts', { label: 'Sold', align: 'right' }, { label: 'Sell-through', align: 'right' }, '']}>
           {p.items.map((e) => (
@@ -196,14 +202,18 @@ function OrgEvents({ id, total, upcoming }: { id: number; total: number; upcomin
 }
 
 function OrgTransactions({ id }: { id: number }) {
-  const p = useCursorPager<{ id: number; createdAt: string; amount: number; currency: string; status: string; transactionType: string }>(`/organizers/${id}/transactions`, NO_PARAMS, {
+  const { q, setQ, params } = useQParams();
+  const p = useCursorPager<{ id: number; createdAt: string; amount: number; currency: string; status: string; transactionType: string }>(`/organizers/${id}/transactions`, params, {
     urlSize: false,
     initialSize: 10,
   });
   return (
-    <Panel title="Transactions" freshness="Newest first, all types">
+    <Panel title="Transactions" freshness="Newest first, all types" busy={p.isFetching && !p.isLoading}>
+      <div className="mb-3">
+        <SearchForm id={`org-tx-q-${id}`} label="Search this organizer's transactions" placeholder="Transaction id, type, status or network" initial="" onSearch={setQ} />
+      </div>
       {p.items.length === 0 && !p.isLoading ? (
-        <p className="text-[13px] text-ink-muted">No transactions.</p>
+        <p className="text-[13px] text-ink-muted">{q ? `No transaction matches “${q}”.` : 'No transactions.'}</p>
       ) : (
         <ul className="hover-list flex flex-col">
           {p.items.map((t) => (

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { NoAccess } from '@/components/PhasePlaceholder';
 import { Button, ErrorState, Field, inputClass, Panel, Skeleton, StatusBadge } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
-import { PagerBar, useClientPager } from '@/components/pager';
+import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { formatRelative } from '@/lib/format';
 import { useCan } from '../../me-context';
 
@@ -25,7 +25,7 @@ export default function FlagsPage() {
   const can = useCan('flags.write');
   const q = useQuery({ queryKey: ['flags'], queryFn: () => api<{ items: Flag[] }>('/flags'), enabled: can });
   const [editing, setEditing] = useState<Flag | 'new' | null>(null);
-  const pager = useClientPager(q.data?.items ?? [], 25);
+  const { pager, q: search, setQ: setSearch } = useSearchPager(q.data?.items ?? [], (f) => `${f.key} ${f.description ?? ''} ${f.enabled ? 'on' : 'off'}`, 25);
   if (!can) return <NoAccess />;
   return (
     <div className="flex flex-col gap-5">
@@ -45,6 +45,11 @@ export default function FlagsPage() {
         ) : !q.data?.items.length ? (
           <p className="py-2 text-[13px] text-ink-muted">No flags yet.</p>
         ) : (
+          <>
+          <div className="mb-3">
+            <ListSearch id="flags-q" value={search} onChange={setSearch} placeholder="Flag name or description" label="Search flags" />
+          </div>
+          {!pager.items.length && <p className="py-2 text-[13px] text-ink-muted">No flag matches “{search}”.</p>}
           <ul className="flex flex-col">
             {pager.items.map((f) => (
               <li key={f.key} className="flex flex-wrap items-center justify-between gap-3 border-b border-line py-3">
@@ -64,6 +69,7 @@ export default function FlagsPage() {
               </li>
             ))}
           </ul>
+          </>
         )}
         <PagerBar pager={pager} noun="flags" />
       </Panel>

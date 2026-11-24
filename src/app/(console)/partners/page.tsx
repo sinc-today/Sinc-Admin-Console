@@ -9,7 +9,7 @@ import { RowLink, Table, td, tdFirst, tdLast, OpenCell } from '@/components/dire
 import { Button, EmptyState, ErrorState, Field, inputClass, Panel, Skeleton, StatusBadge } from '@/components/ui';
 import { useScopeParams } from '@/lib/analytics';
 import { api, ApiError } from '@/lib/api';
-import { PagerBar, useClientPager } from '@/components/pager';
+import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { useCan } from '../me-context';
 import { Modal } from '@/components/Modal';
 import { OrganizerPicker } from '@/components/OrganizerPicker';
@@ -35,7 +35,7 @@ export default function PartnersPage() {
   const [showRemoved, setShowRemoved] = useState(false);
   const qs = new URLSearchParams({ from: params.get('from')!, to: params.get('to')!, ...(showRemoved ? { removed: '1' } : {}) });
   const q = useQuery({ queryKey: ['partners', key, showRemoved], queryFn: () => api<{ items: Row[]; from: string; to: string }>(`/partners?${qs}`), enabled: can, placeholderData: (p) => p });
-  const pager = useClientPager(q.data?.items ?? [], 25);
+  const { pager, q: search, setQ: setSearch } = useSearchPager(q.data?.items ?? [], (p) => `${p.name} ${p.countries.join(' ')} ${p.countries.map((x) => COUNTRY_NAME[x] ?? x).join(' ')}`, 25);
   if (!can) return <NoAccess />;
   return (
     <div className="flex flex-col gap-5">
@@ -54,6 +54,11 @@ export default function PartnersPage() {
         ) : !q.data?.items.length ? (
           <EmptyState title="No partners yet" body="Add a licence operator to share commission in their country." />
         ) : (
+          <>
+          <div className="mb-4">
+            <ListSearch id="partners-q" value={search} onChange={setSearch} placeholder="Partner or country" label="Search partners" />
+          </div>
+          {!pager.items.length && <p className="py-2 text-[13px] text-ink-muted">No partner matches “{search}”.</p>}
           <Table minWidth={980} head={['Partner', 'Countries', 'Terms in force', { label: 'Sales', align: 'right' }, { label: 'Operator share', align: 'right' }, { label: 'Sinc keeps', align: 'right' }, 'Credits', '']}>
             {pager.items.map((p) => {
               const per = p.periods[0];
@@ -88,6 +93,7 @@ export default function PartnersPage() {
               );
             })}
           </Table>
+          </>
         )}
         <PagerBar pager={pager} noun="partners" />
         <label className="mt-3 flex items-center gap-2 text-[13px] text-ink-secondary">

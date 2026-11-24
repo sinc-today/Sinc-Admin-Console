@@ -6,7 +6,7 @@ import { NoAccess } from '@/components/PhasePlaceholder';
 import { fmt } from '@/components/analytics-ui';
 import { Button, ErrorState, Field, inputClass, Panel, Skeleton, StatusBadge, InfoTip } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
-import { PagerBar, useClientPager } from '@/components/pager';
+import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { formatRelative } from '@/lib/format';
 import { useCan } from '../me-context';
 
@@ -151,7 +151,7 @@ function Compose() {
 function History() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['comms-requests'], queryFn: () => api<{ items: Req[] }>('/comms/requests') });
-  const pager = useClientPager(q.data?.items ?? [], 10);
+  const { pager, q: search, setQ: setSearch } = useSearchPager(q.data?.items ?? [], (r) => `${r.title} ${r.body} ${r.audienceLabel} ${r.status}`, 10);
   const [rejecting, setRejecting] = useState<number | null>(null);
   const [reason, setReason] = useState('');
   const decide = useMutation({
@@ -172,6 +172,11 @@ function History() {
       ) : !q.data?.items.length ? (
         <p className="py-2 text-[13px] text-ink-muted">No pushes yet.</p>
       ) : (
+        <>
+        <div className="mb-3">
+          <ListSearch id="comms-q" value={search} onChange={setSearch} placeholder="Title, message, audience or status" label="Search pushes" />
+        </div>
+        {!pager.items.length && <p className="py-2 text-[13px] text-ink-muted">No push matches “{search}”.</p>}
         <ul className="flex flex-col">
           {pager.items.map((r) => (
             <li key={r.id} className="flex flex-col gap-2 border-b border-line py-4 first:pt-0">
@@ -228,6 +233,7 @@ function History() {
             </li>
           ))}
         </ul>
+        </>
       )}
       <PagerBar pager={pager} noun="pushes" sizes={[10, 25, 50]} />
       {decide.error && <p className="mt-2 text-[12px] text-ember-ink">{(decide.error as Error).message}</p>}

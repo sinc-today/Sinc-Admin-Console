@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 
 import * as Popover from '@radix-ui/react-popover';
 import clsx from 'clsx';
-import { CaretDown, Check } from '@phosphor-icons/react';
+import { CaretDown, Check, X } from '@phosphor-icons/react';
 import { useState } from 'react';
 import {
   COMPARE,
@@ -28,6 +28,7 @@ export function ScopePill() {
   // Partner pages always cover the partner's own countries; only the dates (and comparison) apply there.
   const datesOnly = path.startsWith('/portal') || path === '/market' || path.startsWith('/market/');
   const { scope, setScope, from, to, currency, timeZone } = useScope();
+  const changed = scope.range !== '30d' || scope.cmp !== 'prev' || (!datesOnly && (scope.country !== 'RWA' || !!scope.cur));
   const rangeLabel = scope.range === 'custom' ? `${shortDate(from)} to ${shortDate(to)}` : PRESET_LABELS[scope.range];
 
   return (
@@ -102,6 +103,19 @@ export function ScopePill() {
           </div>
         )}
       </Segment>
+        </>
+      )}
+      {changed && (
+        <>
+          <Divider />
+          <button
+            type="button"
+            onClick={() => setScope({ range: null, from: null, to: null, cmp: null, country: null, cur: null })}
+            className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-pill px-2.5 text-[12px] font-medium text-ink-secondary hover:bg-fog hover:text-ink"
+            title="Back to the last 30 days, Rwanda, RWF"
+          >
+            <X size={12} aria-hidden /> Reset
+          </button>
         </>
       )}
     </div>
