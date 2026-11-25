@@ -11,6 +11,7 @@ import { AccountPicker } from './AccountPicker';
 import { Avatar } from './Avatar';
 import { RowLink, SearchForm } from './directory-ui';
 import { Modal } from './Modal';
+import { toast } from './Toaster';
 import { PagerBar, useOffsetPager } from './pager';
 import { Button, Field, inputClass, Panel, Skeleton, Tag } from './ui';
 
@@ -157,9 +158,10 @@ function InviteDialog({ organizerId, roles, onClose }: { organizerId: number; ro
   const qc = useQueryClient();
   const [f, setF] = useState<{ email: string; roleIds: number[]; reason: string }>({ email: '', roleIds: [], reason: '' });
   const m = useMutation({
-    mutationFn: () => api(`/organizers/${organizerId}/team/invite`, { method: 'POST', json: f }),
-    meta: { success: 'Invitation sent' },
-    onSuccess: () => {
+    mutationFn: () => api<{ emailSent?: boolean; emailError?: string | null }>(`/organizers/${organizerId}/team/invite`, { method: 'POST', json: f }),
+    meta: { silent: true },
+    onSuccess: (r) => {
+      toast(r?.emailSent === false ? `Invitation saved, but the email to ${f.email} failed${r.emailError ? ` (${r.emailError})` : ''}` : `Invitation emailed to ${f.email}`);
       qc.invalidateQueries({ queryKey: ['org-invites', organizerId] });
       onClose();
     },

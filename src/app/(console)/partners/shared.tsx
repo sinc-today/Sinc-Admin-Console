@@ -1,6 +1,7 @@
 'use client';
 
 import { OrganizerPicker } from '@/components/OrganizerPicker';
+import { NumberInput } from '@/components/NumberInput';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { fmt, humanize } from '@/components/analytics-ui';
@@ -88,6 +89,7 @@ export const termsPayload = (d: TermsDraft) => ({
 
 export function TermsFields({ id, value, onChange }: { id: string; value: TermsDraft; onChange: (v: TermsDraft) => void }) {
   const set = (k: keyof TermsDraft) => (e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...value, [k]: e.target.value });
+  const num = (k: keyof TermsDraft) => (t: string) => onChange({ ...value, [k]: t });
   const hasBlocker = Number(value.blockerPct) > 0;
   return (
     <>
@@ -95,13 +97,13 @@ export function TermsFields({ id, value, onChange }: { id: string; value: TermsD
         <input id={`${id}-from`} type="date" required className={inputClass} value={value.effectiveFrom} onChange={set('effectiveFrom')} />
       </Field>
       <Field label="Sinc royalty (% of ticket price)" htmlFor={`${id}-royalty`} helper="0 during a grace period.">
-        <input id={`${id}-royalty`} type="number" step="0.01" min="0" max="100" required className={inputClass} value={value.royaltyPct} onChange={set('royaltyPct')} />
+        <NumberInput id={`${id}-royalty`} step="0.01" min={0} max={100} required className={inputClass} value={value.royaltyPct} onValue={num('royaltyPct')} />
       </Field>
       <Field label="Blocker (% of ticket price)" htmlFor={`${id}-blocker`} helper="Optional. 0 means no blocker.">
-        <input id={`${id}-blocker`} type="number" step="0.01" min="0" max="100" className={inputClass} value={value.blockerPct} onChange={set('blockerPct')} />
+        <NumberInput id={`${id}-blocker`} step="0.01" min={0} max={100} className={inputClass} value={value.blockerPct} onValue={num('blockerPct')} />
       </Field>
       <Field label="Share of the blocker Sinc funds (%)" htmlFor={`${id}-bsinc`} helper="Capped at Sinc's royalty. The operator covers the rest.">
-        <input id={`${id}-bsinc`} type="number" step="1" min="0" max="100" disabled={!hasBlocker} className={inputClass} value={value.blockerSincPct} onChange={set('blockerSincPct')} />
+        <NumberInput id={`${id}-bsinc`} step={1} min={0} max={100} disabled={!hasBlocker} className={inputClass} value={value.blockerSincPct} onValue={num('blockerSincPct')} />
       </Field>
       {hasBlocker && (
         <>
@@ -169,10 +171,10 @@ export function SplitPreview({ id, country, terms }: { id: string; country: stri
       <h3 className="text-[13px] font-medium text-ink">How one sale splits</h3>
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Field label={`Ticket price (${cur})`} htmlFor={`${id}-gross`}>
-          <input id={`${id}-gross`} type="number" min="1" className={inputClass} value={gross} onChange={(e) => setGross(e.target.value)} />
+          <NumberInput id={`${id}-gross`} min={1} step="any" className={inputClass} value={gross} onValue={(t) => setGross(t)} />
         </Field>
         <Field label="Organizer's commission (%)" htmlFor={`${id}-comm`}>
-          <input id={`${id}-comm`} type="number" step="0.1" min="0" max="100" className={inputClass} value={commissionPct} onChange={(e) => setCommissionPct(e.target.value)} />
+          <NumberInput id={`${id}-comm`} step="0.1" min={0} max={100} className={inputClass} value={commissionPct} onValue={(t) => setCommissionPct(t)} />
         </Field>
         <Field label="Paid with" htmlFor={`${id}-gw`}>
           <select id={`${id}-gw`} className={inputClass} value={gateway} onChange={(e) => setGateway(e.target.value)}>

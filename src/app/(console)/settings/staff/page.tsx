@@ -2,6 +2,7 @@
 
 import { Avatar } from '@/components/Avatar';
 import { AccountPicker } from '@/components/AccountPicker';
+import { toast } from '@/components/Toaster';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { useState } from 'react';
@@ -279,9 +280,16 @@ function AddStaff({ roles }: { roles: RoleRow[] }) {
   const [error, setError] = useState<string | null>(null);
 
   const add = useMutation({
-    mutationFn: () => api('/staff', { method: 'POST', json: { email, roleKey, reason } }),
-    meta: { success: 'Staff member added' },
-    onSuccess: () => {
+    mutationFn: () => api<{ accountCreated?: boolean; emailSent?: boolean; emailError?: string | null }>('/staff', { method: 'POST', json: { email, roleKey, reason } }),
+    meta: { silent: true },
+    onSuccess: (r) => {
+      toast(
+        r?.emailSent === false
+          ? `Staff member added, but the email to ${email} failed${r.emailError ? ` (${r.emailError})` : ''}. Tell them directly.`
+          : r?.accountCreated
+            ? `Sinc account created and sign-in details emailed to ${email}`
+            : `Staff member added. Access email sent to ${email}`
+      );
       qc.invalidateQueries({ queryKey: ['staff'] });
       setEmail('');
       setReason('');
@@ -305,7 +313,7 @@ function AddStaff({ roles }: { roles: RoleRow[] }) {
           }}
         >
           <AccountPicker id="add-find" onPick={(a) => setEmail(a.email)} />
-          <Field label="Email" htmlFor="add-email" helper="Their Sinc account email. Admin access is given automatically; they set up two-factor on first sign-in.">
+          <Field label="Email" htmlFor="add-email" helper="They get an email either way. No Sinc account with this email yet? One is created and its sign-in details are emailed. They set up two-factor on first sign-in.">
             <input id="add-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="name@sinc.today" />
           </Field>
           <Field label="Role" htmlFor="add-role">

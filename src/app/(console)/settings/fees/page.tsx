@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { NumberInput } from '@/components/NumberInput';
 import { useState } from 'react';
 import { NoAccess } from '@/components/PhasePlaceholder';
 import { humanize } from '@/components/analytics-ui';
@@ -267,12 +268,12 @@ function NewFeeForm({ providers }: { providers: string[] }) {
       </Field>
       {f.kind !== 'FIXED' && (
         <Field label="Percentage" htmlFor="nf-pct">
-          <input id="nf-pct" type="number" step="0.01" min="0" max="100" required className={inputClass} value={f.percentage} onChange={set('percentage')} />
+          <NumberInput id="nf-pct" step="0.01" min={0} max={100} required className={inputClass} value={f.percentage} onValue={(t) => setF({ ...f, percentage: t })} />
         </Field>
       )}
       {f.kind !== 'PERCENTAGE' && (
         <Field label={`Fixed amount (${f.country === 'UGA' ? 'UGX' : 'RWF'})`} htmlFor="nf-fixed">
-          <input id="nf-fixed" type="number" step="1" min="0" required className={inputClass} value={f.fixed} onChange={set('fixed')} />
+          <NumberInput id="nf-fixed" step={1} min={0} required className={inputClass} value={f.fixed} onValue={(t) => setF({ ...f, fixed: t })} />
         </Field>
       )}
       <Field label="Takes effect on" htmlFor="nf-from" helper="Kigali date. Past sales keep the rate they used.">
@@ -346,7 +347,7 @@ function NewSmsForm({ gateways }: { gateways: string[] }) {
         </select>
       </Field>
       <Field label="Price per part" htmlFor="ns-price">
-        <input id="ns-price" type="number" step="0.01" min="0" required className={inputClass} value={f.pricePerPart} onChange={set('pricePerPart')} />
+        <NumberInput id="ns-price" step="0.01" min={0} required className={inputClass} value={f.pricePerPart} onValue={(t) => setF({ ...f, pricePerPart: t })} />
       </Field>
       <Field label="Takes effect on" htmlFor="ns-from">
         <input id="ns-from" type="date" required className={inputClass} value={f.effectiveFrom} onChange={set('effectiveFrom')} />

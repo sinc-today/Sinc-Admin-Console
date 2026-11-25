@@ -16,7 +16,7 @@ export interface SincAccount {
   accountType: string | null;
   imageUrl: string | null;
   isBlocked: boolean;
-  organizers: { id: number; name: string; country: string | null }[];
+  organizers: { id: number; name: string; country: string | null; owner: boolean }[];
 }
 
 /**

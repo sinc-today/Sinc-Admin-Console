@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { NumberInput } from './NumberInput';
 import { useState } from 'react';
 import { useCan } from '@/app/(console)/me-context';
 import { api } from '@/lib/api';
@@ -89,10 +90,10 @@ function CommissionDialog({ organizerId, plan, onClose }: { organizerId: number;
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Non-consumable tickets (%)" htmlFor="oc-commission" helper="Entry tickets">
-            <input id="oc-commission" inputMode="numeric" required className={inputClass} value={f.commission} onChange={(e) => setF({ ...f, commission: e.target.value.replace(/\D/g, '').slice(0, 3) })} />
+            <NumberInput id="oc-commission" min={0} max={100} step={1} required className={inputClass} value={f.commission} onValue={(t) => setF({ ...f, commission: t })} />
           </Field>
           <Field label="Consumable tickets (%)" htmlFor="oc-consumable" helper="Drinks, food, merchandise">
-            <input id="oc-consumable" inputMode="numeric" required className={inputClass} value={f.consumable} onChange={(e) => setF({ ...f, consumable: e.target.value.replace(/\D/g, '').slice(0, 3) })} />
+            <NumberInput id="oc-consumable" min={0} max={100} step={1} required className={inputClass} value={f.consumable} onValue={(t) => setF({ ...f, consumable: t })} />
           </Field>
         </div>
         <Field label="Reason (audit log)" htmlFor="oc-reason">

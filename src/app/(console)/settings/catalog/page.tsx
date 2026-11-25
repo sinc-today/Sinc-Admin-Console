@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { NumberInput } from '@/components/NumberInput';
 import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { useState } from 'react';
 import { NoAccess } from '@/components/PhasePlaceholder';
@@ -190,7 +191,7 @@ function Editor({ edit, onDone }: { edit: Edit; onDone: () => void }) {
         : 'id' in edit && edit.id
           ? `Rename ${'name' in edit ? edit.name : ''}`
           : 'New tag';
-  const num = (k: keyof Plan) => (e: React.ChangeEvent<HTMLInputElement>) => setPlan({ ...plan, [k]: Number(e.target.value) });
+  const num = (k: keyof Plan) => (_t: string, n: number | null) => setPlan({ ...plan, [k]: n });
   const flag = (k: keyof Plan) => (e: React.ChangeEvent<HTMLInputElement>) => setPlan({ ...plan, [k]: e.target.checked });
   return (
     <form
@@ -215,13 +216,13 @@ function Editor({ edit, onDone }: { edit: Edit; onDone: () => void }) {
             <input id="pl-name" required className={inputClass} value={plan.name ?? ''} onChange={(e) => setPlan({ ...plan, name: e.target.value })} />
           </Field>
           <Field label="Price" htmlFor="pl-price">
-            <input id="pl-price" type="number" min="0" required className={inputClass} value={plan.price ?? 0} onChange={num('price')} />
+            <NumberInput id="pl-price" min={0} step="any" required className={inputClass} value={plan.price} onValue={num('price')} />
           </Field>
           <Field label="Max attendance per event" htmlFor="pl-att">
-            <input id="pl-att" type="number" min="1" required className={inputClass} value={plan.maxAttendance ?? 1} onChange={num('maxAttendance')} />
+            <NumberInput id="pl-att" min={1} step={1} required className={inputClass} value={plan.maxAttendance} onValue={num('maxAttendance')} />
           </Field>
           <Field label="Highest ticket price" htmlFor="pl-hp">
-            <input id="pl-hp" type="number" min="1" required className={inputClass} value={plan.highestPrice ?? 1} onChange={num('highestPrice')} />
+            <NumberInput id="pl-hp" min={1} step="any" required className={inputClass} value={plan.highestPrice} onValue={num('highestPrice')} />
           </Field>
           <label className="flex items-center gap-2 text-[13px]">
             <input type="checkbox" checked={!!plan.nonFollowerReach} onChange={flag('nonFollowerReach')} /> Reach beyond followers

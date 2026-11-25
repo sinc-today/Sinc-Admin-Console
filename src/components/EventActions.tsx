@@ -1,6 +1,7 @@
 'use client';
 
 import { DownloadSimple, Globe, LockSimple, Star, Ticket as TicketIcon } from '@phosphor-icons/react';
+import { NumberInput } from './NumberInput';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -170,6 +171,7 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
   const qc = useQueryClient();
   const opts = useQuery({ queryKey: ['generate-options', eventId], queryFn: () => api<Options>(`/events/${eventId}/generate-options`) });
   const [f, setF] = useState({ ticketId: 0, quantity: 1, template: '', email: '', reason: '' });
+  const [qtyText, setQtyText] = useState('1');
   const [done, setDone] = useState<Generated | null>(null);
   const tickets = opts.data?.tickets ?? [];
   const chosen = tickets.find((t) => t.id === f.ticketId) ?? tickets.find((t) => !t.disabled && t.left > 0);
@@ -253,7 +255,7 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
                 return (
                   <label key={t.id} className={clsx('flex items-center justify-between gap-3 border px-3 py-2.5 text-[14px]', chosen?.id === t.id ? 'border-ink' : 'border-line-strong', off ? 'cursor-not-allowed text-ink-disabled' : 'cursor-pointer hover:bg-fog')}>
                     <span className="flex items-center gap-2">
-                      <input type="radio" name="gt-ticket" disabled={off} checked={chosen?.id === t.id} onChange={() => setF({ ...f, ticketId: t.id, quantity: Math.min(f.quantity, Math.min(100, t.left)) || 1 })} />
+                      <input type="radio" name="gt-ticket" disabled={off} checked={chosen?.id === t.id} onChange={() => { const q = Math.min(f.quantity || 1, Math.min(100, t.left)) || 1; setF({ ...f, ticketId: t.id, quantity: q }); setQtyText(String(q)); }} />
                       {t.name ?? `Ticket #${t.id}`}
                       <span className="text-[12px] text-ink-muted">{t.price > 0 ? fmt('money', t.price, currency ?? undefined) : 'Free'}</span>
                     </span>
@@ -264,8 +266,8 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
             </div>
           </fieldset>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="How many" htmlFor="gt-qty" helper={`1 to ${max} at a time`}>
-              <input id="gt-qty" type="number" min={1} max={max || 1} required className={inputClass} value={f.quantity} onChange={(e) => setF({ ...f, quantity: Math.max(1, Math.min(max || 1, Number(e.target.value) || 1)) })} />
+            <Field label="How many" htmlFor="gt-qty" helper={qtyText !== '' && (!Number.isInteger(f.quantity) || f.quantity < 1 || f.quantity > max) ? `Enter a whole number from 1 to ${max}` : `1 to ${max} at a time`}>
+              <NumberInput id="gt-qty" min={1} max={max || 1} step={1} required className={inputClass} value={qtyText} onValue={(t, n) => { setQtyText(t); setF({ ...f, quantity: n ?? 0 }); }} />
             </Field>
             <Field label="Ticket design" htmlFor="gt-design">
               <select id="gt-design" className={inputClass} value={template} onChange={(e) => setF({ ...f, template: e.target.value })}>
@@ -286,7 +288,7 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
           </Field>
           {m.error && <p className="text-[12px] text-ember-ink">{(m.error as Error).message}</p>}
           <div className="flex gap-2">
-            <Button type="submit" loading={m.isPending} loadingText="Generating… this can take a minute" disabled={!chosen || max < 1 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim()) || f.reason.trim().length < 5}>
+            <Button type="submit" loading={m.isPending} loadingText="Generating… this can take a minute" disabled={!chosen || max < 1 || !Number.isInteger(f.quantity) || f.quantity < 1 || f.quantity > max || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim()) || f.reason.trim().length < 5}>
               Generate {f.quantity} ticket{f.quantity === 1 ? '' : 's'}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>

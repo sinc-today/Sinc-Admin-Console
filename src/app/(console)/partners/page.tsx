@@ -113,6 +113,7 @@ function NewPartner() {
   const [f, setF] = useState({ name: '', legalName: '', country: 'UGA', account: '', contactEmail: '', contactName: '', reason: '' });
   const [invite, setInvite] = useState(true);
   const [accountLabel, setAccountLabel] = useState<string | null>(null);
+  const [accountNote, setAccountNote] = useState<string | null>(null);
   const [done, setDone] = useState<{ id: number; message: string | null; failed: boolean } | null>(null);
   const [terms, setTerms] = useState(emptyTerms());
   const save = useMutation({
@@ -182,8 +183,16 @@ function NewPartner() {
             label="Find the partner's Sinc account"
             onPick={(a) => {
               // Fill what Sinc already knows; anything already typed is kept.
-              const org = a.organizers.find((o) => o.country === f.country) ?? a.organizers[0];
+              // Prefer a profile they own, in the partner's country.
+              const org = a.organizers.find((o) => o.owner && o.country === f.country) ?? a.organizers.find((o) => o.owner) ?? a.organizers[0];
               if (org) setAccountLabel(`${org.name} (#${org.id})`);
+              setAccountNote(
+                org
+                  ? a.organizers.length > 1
+                    ? `@${a.username} has ${a.organizers.length} organizer profiles; ${org.name} was picked. Change it if shares should go elsewhere.`
+                    : null
+                  : `@${a.username} has no organizer profile on Sinc, so there is no account to pay shares into yet. Search for the right organizer, or leave it empty: shares wait until one is set.`
+              );
               setF((x) => ({
                 ...x,
                 name: x.name || a.name || a.username,
@@ -208,8 +217,8 @@ function NewPartner() {
               <option value="RWA">Rwanda</option>
             </select>
           </Field>
-          <Field label="Sinc operator account" htmlFor="np-account" helper="Where their shares are paid. Shares wait until one is set.">
-            <OrganizerPicker id="np-account" value={f.account} initialLabel={accountLabel} onChange={(v) => setF({ ...f, account: v })} />
+          <Field label="Sinc operator account" htmlFor="np-account" helper={accountNote ?? 'Where their shares are paid. Shares wait until one is set.'}>
+            <OrganizerPicker id="np-account" value={f.account} initialLabel={accountLabel} onChange={(v) => { setAccountNote(null); setF({ ...f, account: v }); }} />
           </Field>
           <Field label="Contact email" htmlFor="np-email">
             <input id="np-email" type="email" className={inputClass} value={f.contactEmail} onChange={set('contactEmail')} />
