@@ -5,7 +5,7 @@ import { parseAsInteger, parseAsString, useQueryState, useQueryStates } from 'nu
 import { NoAccess } from '@/components/PhasePlaceholder';
 import { chipsFor, CountryCode, FilterBar, ListState, RowLink, SavedViews, SearchForm, SelectField, Table, dayFmt, td, tdFirst, tdLast, OpenCell } from '@/components/directory-ui';
 import { PagerBar, useCursorPager } from '@/components/pager';
-import { Panel, StatusBadge } from '@/components/ui';
+import { Button, Panel, StatusBadge } from '@/components/ui';
 import { COUNTRY_OPTIONS } from '@/lib/countries';
 import { formatRelative } from '@/lib/format';
 import { useCan } from '../me-context';
@@ -70,7 +70,7 @@ export default function UsersPage() {
   return (
     <div className="flex flex-col gap-5">
       <FilterBar
-        search={<SearchForm id="u-q" label="Search users" placeholder="Id, username, name or email" helper="Exact id, or part of a username, name or email." initial={f.q ?? ''} onSearch={(v) => setF({ q: v })} />}
+        search={<SearchForm id="u-q" label="Search users" placeholder="Username, name, email, phone or id" helper="Part of a username, name or email, a phone number (any format), or an exact id." initial={f.q ?? ''} onSearch={(v) => setF({ q: v })} />}
         filters={defs.map((d) => (
           <SelectField key={d.key} id={`u-${d.key}`} label={d.label} value={fv[d.key]} onChange={(v) => setF({ [d.key]: v })} options={d.options} />
         ))}
@@ -79,7 +79,17 @@ export default function UsersPage() {
         actions={<SavedViews page="users" />}
       />
       <Panel title="Users" freshness="Newest first" info="Select a name for quick details; the id opens the full page." busy={q.isFetching && !!q.isPlaceholderData}>
-        <ListState q={q} count={items.length} emptyTitle="No users match" emptyBody="Clear a filter or try another name.">
+        {!q.isLoading && !items.length && Number(q.data?.hiddenByFilters ?? 0) > 0 ? (
+          <div role="status" className="flex flex-col items-start gap-3 py-6">
+            <p className="text-[14px] text-ink">
+              {Number(q.data?.hiddenByFilters) >= 20 ? 'Many accounts match' : `${q.data?.hiddenByFilters} account${q.data?.hiddenByFilters === 1 ? '' : 's'} match`} “{f.q}”, but the filters you have on hide {q.data?.hiddenByFilters === 1 ? 'it' : 'them'}.
+            </p>
+            <Button variant="secondary" onClick={() => setF({ active: null, country: null, countryBy: null, method: null, accountType: null, blocked: null })}>
+              Clear filters and show {q.data?.hiddenByFilters === 1 ? 'it' : 'them'}
+            </Button>
+          </div>
+        ) : (
+        <ListState q={q} count={items.length} emptyTitle="No users match" emptyBody="Try part of their username, name, email or phone number.">
           <Table sticky head={head}>
             {items.map((u) => (
               <tr key={u.id} className="h-11 border-b border-line hover:bg-fog">
@@ -89,10 +99,13 @@ export default function UsersPage() {
                 <td className={`${td} max-w-[260px]`}>
                   <span className="flex min-w-0 items-center gap-2.5">
                     <Avatar src={u.imageUrl} name={u.name || u.username} size={28} />
-                    <button type="button" onClick={() => openUser(u.id)} className="min-w-0 cursor-pointer truncate text-left text-ink hover:underline hover:decoration-ember hover:underline-offset-4" aria-label={`Open details for ${u.name || u.username}`}>
-                      {u.name || u.username}
-                    </button>
-                    {u.name && <span className="hidden shrink-0 text-[12px] text-ink-muted 2xl:inline">@{u.username}</span>}
+                    <span className="min-w-0">
+                      <button type="button" onClick={() => openUser(u.id)} className="block max-w-full cursor-pointer truncate text-left text-ink hover:underline hover:decoration-ember hover:underline-offset-4" aria-label={`Open details for ${u.name || u.username}`}>
+                        {u.name || u.username}
+                      </button>
+                      {/* The username is what people search for: always show it. */}
+                      {u.name && u.name !== u.username && <span className="block truncate text-[12px] text-ink-muted">@{u.username}</span>}
+                    </span>
                   </span>
                 </td>
                 <td className={`${td} text-ink-secondary`}>{u.email ?? 'None'}</td>
@@ -131,6 +144,7 @@ export default function UsersPage() {
             ))}
           </Table>
         </ListState>
+        )}
         <PagerBar pager={q} noun="users" />
       </Panel>
     </div>

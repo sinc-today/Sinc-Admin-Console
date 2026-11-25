@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { useCan } from '@/app/(console)/me-context';
 import { api } from '@/lib/api';
 import { formatRelative } from '@/lib/format';
+import { AccountPicker } from './AccountPicker';
 import { Avatar } from './Avatar';
 import { RowLink, SearchForm } from './directory-ui';
 import { Modal } from './Modal';
@@ -172,8 +173,9 @@ function InviteDialog({ organizerId, roles, onClose }: { organizerId: number; ro
           m.mutate();
         }}
       >
+        <AccountPicker id="ti-find" onPick={(a) => setF((x) => ({ ...x, email: a.email }))} />
         <Field label="Email" htmlFor="ti-email">
-          <input id="ti-email" type="email" required autoFocus className={inputClass} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} placeholder="name@example.com" />
+          <input id="ti-email" type="email" required className={inputClass} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} placeholder="name@example.com" />
         </Field>
         <RolePicker roles={roles} value={f.roleIds} onChange={(roleIds) => setF({ ...f, roleIds })} name="ti-role" />
         <Field label="Reason (audit log)" htmlFor="ti-reason">

@@ -1,6 +1,7 @@
 'use client';
 
 import { Avatar } from '@/components/Avatar';
+import { AccountPicker } from '@/components/AccountPicker';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { useState } from 'react';
@@ -303,6 +304,7 @@ function AddStaff({ roles }: { roles: RoleRow[] }) {
             add.mutate();
           }}
         >
+          <AccountPicker id="add-find" onPick={(a) => setEmail(a.email)} />
           <Field label="Email" htmlFor="add-email" helper="Their Sinc account email. Admin access is given automatically; they set up two-factor on first sign-in.">
             <input id="add-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="name@sinc.today" />
           </Field>

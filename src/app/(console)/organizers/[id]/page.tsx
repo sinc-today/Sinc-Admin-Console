@@ -27,7 +27,7 @@ interface Org360 {
   owner: { id: number; name: string | null; username: string; email: string | null; imageUrl?: string | null } | null;
   members: { userId: number | null; name: string | null; email: string | null; isOwner: boolean; isActive: boolean; imageUrl?: string | null }[];
   events: { total: number; upcoming: number; live: number; recent: { id: number; name: string; startDate: string; endDate: string; country: string | null; sold: number; capacity: number }[] };
-  money: { currency: string; gmv: number; payments: number; commission: number; takeRate: number | null; failed: number; withdrawn: number; points: { t: string; v: number }[] };
+  money: { currency: string; gmv: number; payments: number; commission: number | null; takeRate: number | null; failed: number; withdrawn: number; points: { t: string; v: number }[] };
   wallets: { currency: string; provider: string | null; balance: number; status: string | null }[];
   plan?: OrganizerPlan | null;
   commissionRequests: { id: number; status: string; percentage: number; reason: string | null; createdAt: string }[];
@@ -37,6 +37,8 @@ interface Org360 {
 export default function OrganizerPage() {
   const can = useCan('organizers.read');
   const canFinanceExport = useCan('exports.finance');
+  const canRevenue = useCan('revenue.read');
+  const canTransactions = useCan('money.read');
   const { id } = useParams<{ id: string }>();
   const { params, key } = useScopeParams();
   const q = useQuery({ queryKey: ['organizer', id, key], queryFn: () => api<Org360>(`/organizers/${id}?${params}`), enabled: can, placeholderData: (p) => p });
@@ -100,12 +102,17 @@ export default function OrganizerPage() {
 
       <Panel title={`Money in this period (${m.currency})`} info={`Shown in ${m.currency}, the currency this organizer charges in, whatever currency is picked at the top.`} actions={canFinanceExport ? <ExportButton path="/exports/transactions.csv" params={txParams} label="Export transactions" /> : undefined}>
         <Facts
-          cols={6}
+          cols={canRevenue ? 6 : 4}
           items={[
             { label: 'GMV', value: fmt('money', m.gmv, m.currency, true), hint: 'Successful ticket, product and membership payments through a provider' },
             { label: 'Payments', value: fmt('count', m.payments) },
-            { label: 'Commission', value: fmt('money', m.commission, m.currency, true) },
-            { label: 'Take rate', value: fmt('ratio', m.takeRate) },
+            // Sinc's revenue: Finance and Operations only.
+            ...(canRevenue
+              ? [
+                  { label: 'Commission', value: fmt('money', m.commission, m.currency, true) },
+                  { label: 'Take rate', value: fmt('ratio', m.takeRate) },
+                ]
+              : []),
             { label: 'Failed payments', value: fmt('count', m.failed) },
             { label: 'Withdrawn', value: fmt('money', m.withdrawn, m.currency, true) },
           ]}
@@ -156,7 +163,7 @@ export default function OrganizerPage() {
         </div>
       </div>
 
-      <OrgTransactions id={o.id} />
+      {canTransactions && <OrgTransactions id={o.id} />}
     </div>
   );
 }

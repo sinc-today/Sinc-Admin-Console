@@ -40,7 +40,7 @@ const usePageSize = (inUrl: boolean, initial: number) => {
  * Server cursor paging (`?cursor=&limit=` → `{ items, nextCursor }`). The cursors already visited are
  * kept in a stack so Previous works; any change to the filters goes back to page 1.
  */
-export function useCursorPager<T>(path: string, params: URLSearchParams, opts: { enabled?: boolean; urlSize?: boolean; initialSize?: number } = {}): Pager<T> {
+export function useCursorPager<T>(path: string, params: URLSearchParams, opts: { enabled?: boolean; urlSize?: boolean; initialSize?: number } = {}): Pager<T> & { data?: Record<string, unknown> } {
   const [size, setSize] = usePageSize(opts.urlSize ?? true, opts.initialSize ?? 25);
   const base = params.toString();
   const [stack, setStack] = useState<(number | string | null)[]>([null]);
@@ -59,6 +59,7 @@ export function useCursorPager<T>(path: string, params: URLSearchParams, opts: {
   });
   const nextCursor = q.data?.nextCursor ?? null;
   return {
+    data: q.data as Record<string, unknown> | undefined,
     items: q.data?.items ?? [],
     page: stack.length,
     size,

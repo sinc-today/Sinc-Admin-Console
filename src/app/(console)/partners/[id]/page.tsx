@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AccountPicker } from '@/components/AccountPicker';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -682,6 +683,13 @@ function PortalAccess({ id, canManage }: { id: number; canManage: boolean }) {
               add.mutate();
             }}
           >
+            <AccountPicker
+              id="pu-find"
+              onPick={(a) => {
+                setEmail(a.email);
+                setName((n) => n || a.name || a.username);
+              }}
+            />
             <Field label="Email" htmlFor="pu-email" helper="No Sinc account yet? One is created and a password emailed to them.">
               <input id="pu-email" type="email" required className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" />
             </Field>

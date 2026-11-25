@@ -48,7 +48,9 @@ export function OrganizerPicker({
 
   useEffect(() => {
     if (!value) setLabel(null);
-  }, [value]);
+    // Filled in from elsewhere (for example from a picked Sinc account): show it as chosen.
+    else setLabel((l) => l ?? (initialLabel || `Organizer #${value}`));
+  }, [value, initialLabel]);
 
   useEffect(() => {
     const close = (e: MouseEvent) => {

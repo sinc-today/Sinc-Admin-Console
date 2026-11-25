@@ -13,6 +13,7 @@ import { ListSearch, PagerBar, useSearchPager } from '@/components/pager';
 import { useCan } from '../me-context';
 import { Modal } from '@/components/Modal';
 import { OrganizerPicker } from '@/components/OrganizerPicker';
+import { AccountPicker } from '@/components/AccountPicker';
 import { Account, AccessResult, COUNTRY_NAME, Credits, SplitPreview, Terms, TermsFields, Totals, accessMessage, accountLabel, emptyTerms, termsLine, termsPayload } from './shared';
 
 interface Row {
@@ -111,6 +112,7 @@ function NewPartner() {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ name: '', legalName: '', country: 'UGA', account: '', contactEmail: '', contactName: '', reason: '' });
   const [invite, setInvite] = useState(true);
+  const [accountLabel, setAccountLabel] = useState<string | null>(null);
   const [done, setDone] = useState<{ id: number; message: string | null; failed: boolean } | null>(null);
   const [terms, setTerms] = useState(emptyTerms());
   const save = useMutation({
@@ -174,6 +176,25 @@ function NewPartner() {
           save.mutate();
         }}
       >
+        <div className="md:max-w-[520px]">
+          <AccountPicker
+            id="np-find"
+            label="Find the partner's Sinc account"
+            onPick={(a) => {
+              // Fill what Sinc already knows; anything already typed is kept.
+              const org = a.organizers.find((o) => o.country === f.country) ?? a.organizers[0];
+              if (org) setAccountLabel(`${org.name} (#${org.id})`);
+              setF((x) => ({
+                ...x,
+                name: x.name || a.name || a.username,
+                country: org?.country === 'RWA' || org?.country === 'UGA' ? org.country : x.country,
+                account: x.account || (org ? String(org.id) : ''),
+                contactEmail: x.contactEmail || a.email,
+                contactName: x.contactName || a.name || a.username,
+              }));
+            }}
+          />
+        </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Field label="Name" htmlFor="np-name">
             <input id="np-name" required minLength={2} className={inputClass} value={f.name} onChange={set('name')} />
@@ -188,7 +209,7 @@ function NewPartner() {
             </select>
           </Field>
           <Field label="Sinc operator account" htmlFor="np-account" helper="Where their shares are paid. Shares wait until one is set.">
-            <OrganizerPicker id="np-account" value={f.account} onChange={(v) => setF({ ...f, account: v })} />
+            <OrganizerPicker id="np-account" value={f.account} initialLabel={accountLabel} onChange={(v) => setF({ ...f, account: v })} />
           </Field>
           <Field label="Contact email" htmlFor="np-email">
             <input id="np-email" type="email" className={inputClass} value={f.contactEmail} onChange={set('contactEmail')} />
