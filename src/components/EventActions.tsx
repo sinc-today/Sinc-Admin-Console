@@ -143,10 +143,11 @@ interface Options {
   eventTemplate: string | null;
 }
 interface Generated {
-  downloads: { filename: string; downloadUrl: string; sizeMB: number }[];
+  files: { id: number; filename: string; sizeMB: number; url: string }[];
   expiresAt: string | null;
   ticketCount: number;
-  emailedTo?: string | null;
+  emailedTo: string | null;
+  emailError: string | null;
 }
 const designName = (t: string) => (t === 'default' ? 'Standard Sinc ticket' : t.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase()));
 
@@ -168,7 +169,7 @@ export function GenerateTicketsButton({ eventId, eventName, currency }: { eventI
 function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: number; eventName: string; currency?: string | null; onClose: () => void }) {
   const qc = useQueryClient();
   const opts = useQuery({ queryKey: ['generate-options', eventId], queryFn: () => api<Options>(`/events/${eventId}/generate-options`) });
-  const [f, setF] = useState({ ticketId: 0, quantity: 1, template: '', sendTo: '', email: '', phoneNumber: '', reason: '' });
+  const [f, setF] = useState({ ticketId: 0, quantity: 1, template: '', email: '', reason: '' });
   const [done, setDone] = useState<Generated | null>(null);
   const tickets = opts.data?.tickets ?? [];
   const chosen = tickets.find((t) => t.id === f.ticketId) ?? tickets.find((t) => !t.disabled && t.left > 0);
@@ -178,7 +179,7 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
     mutationFn: () =>
       api<Generated>(`/events/${eventId}/generate-tickets`, {
         method: 'POST',
-        json: { ticketId: chosen!.id, quantity: f.quantity, template, sendTo: f.sendTo, email: f.email, phoneNumber: f.phoneNumber, reason: f.reason },
+        json: { ticketId: chosen!.id, quantity: f.quantity, template, email: f.email, reason: f.reason },
       }),
     meta: { success: 'Tickets generated' },
     onSuccess: (r) => {
@@ -188,38 +189,40 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
     },
   });
   return (
-    <Modal open onClose={onClose} title="Generate tickets" description={`${eventName}. Complimentary tickets (paid amount 0) that count against the ticket type's capacity. You download them as PDF files in a ZIP, and can have the ZIP emailed.`} width="max-w-[600px]">
+    <Modal open onClose={onClose} title="Generate tickets" description={`${eventName}. Complimentary tickets (paid amount 0) that count against the ticket type's capacity. They are emailed as a ZIP of PDF files, and you can download them here too.`} width="max-w-[600px]">
       {done ? (
         <div className="flex flex-col gap-4">
           <p role="status" className="text-[16px] text-ink">
             {done.ticketCount} ticket{done.ticketCount === 1 ? '' : 's'} generated
           </p>
+          {done.emailedTo ? (
+            <p className="text-[14px] text-ink-secondary">
+              Emailed to <span className="text-ink">{done.emailedTo}</span>, with a download link.
+            </p>
+          ) : (
+            <p className="text-[13px] text-ember-ink">The email could not be sent{done.emailError ? `: ${done.emailError}` : ''}. Download the file below and send it yourself.</p>
+          )}
           <ul className="flex flex-col gap-2">
-            {done.downloads.map((d) => (
-              <li key={d.downloadUrl}>
-                <a href={d.downloadUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between gap-3 border border-line-strong px-4 py-3 text-[14px] text-ink hover:bg-fog">
+            {done.files.map((d) => (
+              <li key={d.id}>
+                <a href={`/admin-api/v1${d.url}`} download={d.filename} className="flex items-center justify-between gap-3 border border-line-strong px-4 py-3 text-[14px] text-ink hover:bg-fog">
                   <span className="flex min-w-0 items-center gap-2">
                     <DownloadSimple size={18} aria-hidden />
-                    <span className="truncate">{d.filename}</span>
+                    <span className="truncate">Download {d.filename}</span>
                   </span>
                   <span className="shrink-0 text-[12px] text-ink-muted">{d.sizeMB} MB</span>
                 </a>
               </li>
             ))}
           </ul>
-          {done.emailedTo && (
-            <p className="text-[14px] text-ink-secondary">
-              The download links were emailed to <span className="text-ink">{done.emailedTo}</span>.
-            </p>
-          )}
-          {done.expiresAt && <p className="text-[12px] text-ink-muted">Download links work until {new Date(done.expiresAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}.</p>}
+          {done.expiresAt && <p className="text-[12px] text-ink-muted">Links work until {new Date(done.expiresAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}.</p>}
           <div className="flex gap-2">
             <Button onClick={onClose}>Done</Button>
             <Button
               variant="secondary"
               onClick={() => {
                 setDone(null);
-                setF({ ...f, reason: '', sendTo: '' });
+                setF({ ...f, reason: '', email: '' });
               }}
             >
               Generate more
@@ -275,27 +278,15 @@ function GenerateDialog({ eventId, eventName, currency, onClose }: { eventId: nu
               </select>
             </Field>
           </div>
-          <Field label="Email the ZIP to (optional)" htmlFor="gt-send" helper="We email the download links to this address as soon as the tickets are ready.">
-            <input id="gt-send" type="email" autoComplete="email" className={inputClass} value={f.sendTo} onChange={(e) => setF({ ...f, sendTo: e.target.value })} placeholder="name@example.com" />
+          <Field label="Send the tickets to" htmlFor="gt-email" helper="We email this address a link to the ZIP (valid 7 days). It's also saved on the order so the tickets can be found and resent later.">
+            <input id="gt-email" type="email" required autoComplete="email" className={inputClass} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} placeholder="name@example.com" />
           </Field>
-          <details className="text-[13px]">
-            <summary className="cursor-pointer text-ink-secondary hover:text-ink">Who they’re for (optional)</summary>
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Email" htmlFor="gt-email">
-                <input id="gt-email" type="email" className={inputClass} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
-              </Field>
-              <Field label="Phone" htmlFor="gt-phone">
-                <input id="gt-phone" className={inputClass} value={f.phoneNumber} onChange={(e) => setF({ ...f, phoneNumber: e.target.value })} placeholder="+250…" />
-              </Field>
-            </div>
-            <p className="mt-2 text-[12px] text-ink-muted">Saved on the order so the tickets can be found and resent later. These details alone don’t send anything.</p>
-          </details>
           <Field label="Reason (audit log)" htmlFor="gt-reason">
             <input id="gt-reason" required minLength={5} className={inputClass} value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} placeholder="e.g. Sponsor guest list" />
           </Field>
           {m.error && <p className="text-[12px] text-ember-ink">{(m.error as Error).message}</p>}
           <div className="flex gap-2">
-            <Button type="submit" loading={m.isPending} loadingText="Generating…" disabled={!chosen || max < 1 || f.reason.trim().length < 5}>
+            <Button type="submit" loading={m.isPending} loadingText="Generating… this can take a minute" disabled={!chosen || max < 1 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim()) || f.reason.trim().length < 5}>
               Generate {f.quantity} ticket{f.quantity === 1 ? '' : 's'}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>

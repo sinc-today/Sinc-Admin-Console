@@ -34,6 +34,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
+  // Generating complimentary tickets can take up to a minute (nginx allows 120 s in production).
+  experimental: { proxyTimeout: 120_000 },
   async rewrites() {
     return [{ source: '/admin-api/:path*', destination: `${adminApi}/admin-api/:path*` }];
   },
