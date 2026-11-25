@@ -280,7 +280,7 @@ function Retention() {
       {(d) => {
         const maxM = Math.max(0, ...d.cohorts.map((c) => c.cells.length - 1));
         return (
-          <div className="relative -mx-6 overflow-x-auto px-6">
+          <div className="relative -mx-4 sm:-mx-6 overflow-x-auto px-4 sm:px-6">
             <table className="w-full min-w-[720px] border-separate border-spacing-[2px] text-[12px]">
               <thead>
                 <tr className="text-left text-ink-secondary">

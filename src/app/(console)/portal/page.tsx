@@ -87,7 +87,7 @@ export default function PortalPage() {
       <Panel>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="display text-[32px] leading-tight text-ink">{d.partner.name}</h2>
+            <h2 className="display break-words text-[24px] leading-tight text-ink sm:text-[32px]">{d.partner.name}</h2>
             <p className="mt-1 text-[13px] text-ink-secondary">
               Licence partner for {d.partner.countries.map((c) => COUNTRY[c] ?? c).join(' and ')}
               {t && ` · Sinc royalty ${pct(t.royaltyPct)} of the ticket price`}

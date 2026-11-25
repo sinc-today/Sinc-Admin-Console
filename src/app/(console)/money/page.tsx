@@ -318,8 +318,8 @@ type Col = 'when' | 'organizer' | 'amount' | 'gateway' | 'network' | 'type' | 's
 function SimpleTxTable({ rows, columns }: { rows: TxRow[]; columns: Col[] }) {
   const head: Record<Col, string> = { when: 'When (Kigali)', organizer: 'Organizer', amount: 'Amount', gateway: 'Provider', network: 'Network', type: 'Type', status: 'Status', reason: 'Reason' };
   return (
-    <div className="relative -mx-6 overflow-x-auto">
-      <table className="w-full min-w-[720px] border-collapse text-[13px]">
+    <div className="relative -mx-4 sm:-mx-6 overflow-x-auto">
+      <table className="rt w-full min-w-[720px] border-collapse text-[13px]">
         <thead>
           <tr className="bg-fog text-left text-[12px] text-ink-secondary">
             {columns.map((c, i) => (

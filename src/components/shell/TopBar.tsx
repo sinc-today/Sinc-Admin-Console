@@ -10,6 +10,7 @@ import { findNavItem, isScoped } from '@/lib/nav';
 import { CommandPalette } from './CommandPalette';
 import { ScopePill } from './ScopePill';
 import { ChangePasswordDialog } from './ChangePassword';
+import { MobileNav } from './MobileNav';
 
 export function TopBar({ staff, environment, partner = false }: { staff: { displayName: string; email: string; role: { name: string } }; environment: string; partner?: boolean }) {
   const pathname = usePathname();
@@ -18,14 +19,15 @@ export function TopBar({ staff, environment, partner = false }: { staff: { displ
   const scoped = isScoped(pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 min-w-0 items-center gap-4 bg-ash pr-6">
-      <h1 className="display min-w-0 shrink truncate text-[32px] leading-none text-ink">{title}</h1>
+    <header className="sticky top-0 z-30 flex h-14 min-w-0 items-center gap-2 bg-ash px-3 sm:gap-4 md:h-16 md:pl-0 md:pr-6" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <MobileNav partner={partner} />
+      <h1 className="display min-w-0 shrink truncate text-[22px] leading-none text-ink sm:text-[26px] md:text-[32px]">{title}</h1>
       {scoped && (
         <div className="ml-2 hidden min-w-0 lg:block">
           <ScopePill />
         </div>
       )}
-      <div className="ml-auto flex items-center gap-3">
+      <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3">
         {!partner && <CommandPalette />}
         <EnvTag environment={environment} />
         <AccountMenu staff={staff} />
@@ -38,7 +40,7 @@ function EnvTag({ environment }: { environment: string }) {
   const prod = environment === 'production';
   return (
     <span
-      className={`inline-flex h-6 items-center rounded-tag px-2.5 text-[12px] font-medium ${prod ? 'bg-canvas text-ink' : 'bg-ivory text-brass-ink'}`}
+      className={`inline-flex h-6 items-center rounded-tag px-2 text-[11px] font-medium sm:px-2.5 sm:text-[12px] ${prod ? 'bg-canvas text-ink' : 'bg-ivory text-brass-ink'}`}
       title={prod ? 'You are working on live data' : 'Not production'}
     >
       {prod ? 'PROD' : environment === 'staging' ? 'QA' : 'DEV'}
@@ -77,7 +79,7 @@ function AccountMenu({ staff }: { staff: { displayName: string; email: string; r
         {staff.imageUrl ? <Avatar src={staff.imageUrl} name={staff.displayName} size={40} /> : initials}
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content align="end" sideOffset={8} className="z-50 w-64 border border-line-strong bg-canvas p-4" style={{ borderRadius: 0 }}>
+        <Popover.Content align="end" sideOffset={8} collisionPadding={12} className="z-50 w-[min(16rem,calc(100vw-24px))] border border-line-strong bg-canvas p-4" style={{ borderRadius: 0 }}>
           <div className="flex items-center gap-3">
             <Avatar src={staff.imageUrl} name={staff.displayName} size={44} />
             <div className="min-w-0">

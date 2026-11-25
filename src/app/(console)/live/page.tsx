@@ -202,8 +202,8 @@ export default function LivePage() {
           ) : snap.happeningNow.length === 0 ? (
             <p className="py-2 text-[13px] text-ink-muted">No events are on right now.</p>
           ) : (
-            <div className="relative -mx-6 overflow-x-auto">
-              <table className="w-full min-w-[620px] border-collapse text-[13px]">
+            <div className="relative -mx-4 sm:-mx-6 overflow-x-auto">
+              <table className="rt w-full min-w-[620px] border-collapse text-[13px]">
                 <thead>
                   <tr className="bg-fog text-left text-[12px] text-ink-secondary">
                     <th scope="col" className="h-10 px-6 font-medium">Event</th>

@@ -97,7 +97,7 @@ export default function UserPage() {
           <div className="flex items-center gap-4">
             <Avatar src={u.imageUrl} name={u.name || u.username} size={72} />
             <div>
-            <h2 className="display text-[32px] leading-tight text-ink">{u.name || u.username}</h2>
+            <h2 className="display break-words text-[24px] leading-tight text-ink sm:text-[32px]">{u.name || u.username}</h2>
             <p className="mt-1 text-[13px] text-ink-secondary">
               @{u.username} · joined {dayFmt(u.createdAt)} · {u.registrationMethod === 'MANUAL' ? 'email and password' : humanize(u.registrationMethod)} · {humanize(u.accountType)} account
             </p>

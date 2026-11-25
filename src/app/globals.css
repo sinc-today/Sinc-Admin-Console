@@ -314,3 +314,129 @@ tbody tr:has(a[data-row-link]):hover a[data-row-link] {
 .chart-tip .text-ink-secondary {
   opacity: 0.75;
 }
+
+/* ------------------------------------------------------------------ phones */
+
+/* Navigation drawer slides in from the left. */
+dialog.drawer[open] > div {
+  animation: drawer-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+/* Dialogs rise from the bottom on phones. */
+@media (max-width: 639px) {
+  dialog.modal[open] > div {
+    animation: sheet-up 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.drawer[open] > div,
+  dialog.modal[open] > div {
+    animation: none;
+  }
+}
+
+/*
+ * Tables marked .rt become a list of cards below 640px: the naming column on top, every other value on its own
+ * line with its column name (data-label, set by ResponsiveTables). No sideways scrolling, nothing hidden.
+ */
+@media (max-width: 639px) {
+  div:has(> table.rt) {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  table.rt {
+    min-width: 0 !important;
+    width: 100%;
+    display: block;
+  }
+  table.rt thead {
+    display: none;
+  }
+  table.rt tbody {
+    display: block;
+  }
+  table.rt tbody tr {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    height: auto !important;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  table.rt tbody tr[data-full] {
+    padding-top: 0;
+  }
+  table.rt tbody td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    column-gap: 6px;
+    min-height: 26px;
+    max-width: none !important;
+    width: auto !important;
+    padding: 2px 0 !important;
+    border: 0 !important;
+    height: auto !important;
+    text-align: right !important;
+    white-space: normal !important;
+    font-size: 13px;
+  }
+  table.rt tbody td > * {
+    min-width: 0;
+  }
+  /* Charts and bars inside a cell (sparklines, share bars) keep a usable width. */
+  table.rt tbody td:not([data-primary]) > div:only-child {
+    flex: 0 1 60%;
+  }
+  table.rt tbody td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 45%;
+    margin-right: auto;
+    padding-right: 12px;
+    text-align: left;
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  table.rt tbody td[data-label='']::before,
+  table.rt tbody td:not([data-label])::before {
+    content: none;
+  }
+  /* Action cells (no column name) sit at the end of the card, right-aligned. */
+  table.rt tbody td[data-label='']:not([data-primary]) {
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+  table.rt tbody td[data-label='']:not([data-primary]):empty {
+    display: none;
+  }
+  /* The naming cell is the card's title. */
+  table.rt tbody td[data-primary] {
+    order: -1;
+    justify-content: flex-start;
+    text-align: left !important;
+    font-size: 15px;
+    padding-bottom: 4px !important;
+  }
+  table.rt tbody td[data-primary]::before {
+    content: none;
+  }
+  table.rt tbody tr[data-full] > td {
+    display: block;
+    text-align: left !important;
+  }
+  table.rt tbody tr[data-full] > td::before {
+    content: none;
+  }
+}

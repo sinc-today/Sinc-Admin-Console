@@ -150,7 +150,7 @@ export function PagerBar<T>({ pager, noun = 'rows', sizes = PAGE_SIZES as unknow
   if (!items.length && page === 1) return null;
   const from = (page - 1) * size + 1;
   const to = from + items.length - 1;
-  const btn = 'inline-flex size-9 items-center justify-center text-ink outline outline-1 outline-line-strong hover:bg-fog disabled:cursor-not-allowed disabled:text-ink-disabled disabled:hover:bg-transparent';
+  const btn = 'inline-flex size-11 sm:size-9 items-center justify-center text-ink outline outline-1 outline-line-strong hover:bg-fog disabled:cursor-not-allowed disabled:text-ink-disabled disabled:hover:bg-transparent';
   return (
     <nav aria-label={`Pages of ${noun}`} className="mt-4 flex flex-wrap items-center justify-between gap-3 text-[13px] text-ink-secondary">
       <p className="num" aria-live="polite">

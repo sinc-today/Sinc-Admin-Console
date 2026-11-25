@@ -1,7 +1,7 @@
 'use client';
 
 import * as Popover from '@radix-ui/react-popover';
-import { Funnel } from '@phosphor-icons/react';
+import { CalendarBlank } from '@phosphor-icons/react';
 import { usePathname } from 'next/navigation';
 import { isScoped } from '@/lib/nav';
 import { COUNTRY_LABELS, PRESET_LABELS, useScope } from '@/lib/scope';
@@ -12,16 +12,16 @@ export function MobileFilters() {
   const pathname = usePathname() ?? '/';
   const { scope } = useScope();
   if (!isScoped(pathname)) return null;
-  const summary = [scope.range === 'custom' ? 'Custom dates' : PRESET_LABELS[scope.range], !pathname.startsWith('/portal') && COUNTRY_LABELS[scope.country]].filter(Boolean).join(' · ');
+  const summary = [scope.range === 'custom' ? 'Custom dates' : PRESET_LABELS[scope.range], !(pathname.startsWith('/portal') || pathname === '/market' || pathname.startsWith('/market/')) && COUNTRY_LABELS[scope.country]].filter(Boolean).join(' · ');
   return (
-    <div className="pb-2 pr-6 lg:hidden">
+    <div className="px-3 pb-2 sm:px-4 md:pl-0 md:pr-6 lg:hidden">
       <Popover.Root>
-        <Popover.Trigger className="flex h-10 items-center gap-2 rounded-pill bg-canvas px-4 text-[14px] text-ink hover:bg-fog">
-          <Funnel size={16} aria-hidden /> Filters <span className="text-ink-muted">{summary}</span>
+        <Popover.Trigger aria-label={`Report dates and country: ${summary}. Change`} className="flex h-10 max-w-full items-center gap-2 rounded-pill bg-canvas px-4 text-[14px] text-ink hover:bg-fog">
+          <CalendarBlank size={16} aria-hidden className="shrink-0" /> <span className="truncate">{summary}</span>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content align="start" sideOffset={8} className="z-50 max-w-[calc(100vw-24px)] overflow-x-auto border border-line-strong bg-ash p-2" style={{ borderRadius: 0 }}>
-            <ScopePill />
+          <Popover.Content align="start" sideOffset={8} collisionPadding={12} className="z-40 border border-line-strong bg-canvas shadow-lg" style={{ borderRadius: 0 }}>
+            <ScopePill stacked />
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>

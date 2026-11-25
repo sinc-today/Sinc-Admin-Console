@@ -78,7 +78,7 @@ function Body({ id, onClose }: { id: number; onClose: () => void }) {
           <>
             <Flyer src={e.flyer} name={e.name} className="aspect-[4/5] max-h-[360px] w-full object-contain" hideIfMissing />
             <div>
-              <h2 className="display text-[28px] leading-tight text-ink">{e.name}</h2>
+              <h2 className="display break-words text-[22px] leading-tight text-ink sm:text-[28px]">{e.name}</h2>
               <p className="mt-1 text-[13px] text-ink-secondary">
                 {formatDateTime(e.startDate, e.tz)}
                 {e.locationName && ` · ${e.locationName}`}

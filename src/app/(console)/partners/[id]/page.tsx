@@ -77,7 +77,7 @@ export default function PartnerPage() {
       <Panel>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="display text-[28px] leading-tight text-ink">{p.name}</h2>
+            <h2 className="display break-words text-[22px] leading-tight text-ink sm:text-[28px]">{p.name}</h2>
             <p className="mt-1 text-[13px] text-ink-secondary">
               {p.countries.map((x) => COUNTRY_NAME[x] ?? x).join(', ')} · pays into {accountLabel(p.account)}
             </p>

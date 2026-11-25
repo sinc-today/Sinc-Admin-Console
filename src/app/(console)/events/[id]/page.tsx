@@ -79,9 +79,9 @@ export default function EventPage() {
       <Panel>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
-          <Flyer src={e.flyer} name={e.name} className="h-28 w-[90px]" />
+          <Flyer src={e.flyer} name={e.name} className="h-20 w-16 shrink-0 sm:h-28 sm:w-[90px]" />
           <div className="min-w-0">
-            <h2 className="display text-[32px] leading-tight text-ink">{e.name}</h2>
+            <h2 className="display break-words text-[24px] leading-tight text-ink sm:text-[32px]">{e.name}</h2>
             <p className="mt-1 text-[13px] text-ink-secondary">
               {formatDateTime(e.startDate, e.tz)} to {formatDateTime(e.endDate, e.tz)}
               {e.locationName && ` · ${e.locationName}`}

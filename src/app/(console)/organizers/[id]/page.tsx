@@ -62,7 +62,7 @@ export default function OrganizerPage() {
           <div className="flex min-w-0 items-start gap-4">
           <Avatar src={o.logo} name={o.name} size={64} square />
           <div className="min-w-0">
-            <h2 className="display text-[32px] leading-tight text-ink">{o.name}</h2>
+            <h2 className="display break-words text-[24px] leading-tight text-ink sm:text-[32px]">{o.name}</h2>
             <p className="mt-1 text-[13px] text-ink-secondary">
               {o.username && `@${o.username} · `}
               {o.country === 'UGA' ? 'Uganda' : 'Rwanda'} · since {dayFmt(o.createdAt)}

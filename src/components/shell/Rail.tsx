@@ -12,11 +12,15 @@ import { api } from '@/lib/api';
 
 const SCOPE_KEYS = ['range', 'from', 'to', 'cmp', 'country', 'cur'];
 
-/** Left rail: 240px, collapsible to a 64px icon rail; remembers the choice per browser. */
-export function Rail({ permissions, partner = false }: { permissions: string[]; partner?: boolean }) {
+/**
+ * Left rail: 240px, collapsible to a 64px icon rail; remembers the choice per browser. On phones the same
+ * navigation opens full-width in a drawer (`drawer`), always expanded and without the collapse button.
+ */
+export function Rail({ permissions, partner = false, drawer = false }: { permissions: string[]; partner?: boolean; drawer?: boolean }) {
   const pathname = usePathname();
   const params = useSearchParams();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsedPref, setCollapsed] = useState(false);
+  const collapsed = drawer ? false : collapsedPref;
   // Open items across the queues this person can work; shown on Queues only when non-zero.
   const queues = useQuery({ queryKey: ['queues'], queryFn: () => api<{ total: number }>('/queues'), refetchInterval: 120_000, staleTime: 60_000, enabled: !partner });
   const alerts = useQuery({
@@ -95,8 +99,8 @@ export function Rail({ permissions, partner = false }: { permissions: string[]; 
     <nav
       aria-label="Main"
       className={clsx(
-        'sticky top-0 flex h-dvh shrink-0 flex-col overflow-y-auto bg-ash py-4 transition-[width] duration-150 ease-ledger',
-        collapsed ? 'w-16 px-2' : 'w-60 px-3'
+        drawer ? 'flex min-h-full w-full flex-col bg-ash px-3 pb-6 pt-4' : 'sticky top-0 flex h-dvh shrink-0 flex-col overflow-y-auto bg-ash py-4 transition-[width] duration-150 ease-ledger',
+        !drawer && (collapsed ? 'w-16 px-2' : 'w-60 px-3')
       )}
     >
       <div className={clsx('mb-6 flex items-center', collapsed ? 'flex-col justify-center gap-3' : 'h-10 justify-between px-3')}>
@@ -110,7 +114,7 @@ export function Rail({ permissions, partner = false }: { permissions: string[]; 
             <SincLogo className="h-7" />
           </Link>
         )}
-        <button
+        {!drawer && <button
           type="button"
           onClick={toggle}
           aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
@@ -118,7 +122,7 @@ export function Rail({ permissions, partner = false }: { permissions: string[]; 
           className="flex size-10 items-center justify-center text-ink-secondary hover:text-ink"
         >
           <SidebarSimple size={20} aria-hidden />
-        </button>
+        </button>}
       </div>
 
       <div className="flex flex-1 flex-col gap-4">
@@ -147,7 +151,7 @@ export function Rail({ permissions, partner = false }: { permissions: string[]; 
               {open && (
                 <ul id={listId} className="flex flex-col gap-0.5">
                   {items.map((item) => (
-                    <RailLink key={item.href} item={item} active={isActive(item)} collapsed={collapsed} href={`${item.href}${isScoped(item.href) ? scopeQuery : ''}`} badge={badges[item.href]} badgeLabel={badgeLabel[item.href]} />
+                    <RailLink key={item.href} item={item} active={isActive(item)} collapsed={collapsed} large={drawer} href={`${item.href}${isScoped(item.href) ? scopeQuery : ''}`} badge={badges[item.href]} badgeLabel={badgeLabel[item.href]} />
                   ))}
                 </ul>
               )}
@@ -160,6 +164,7 @@ export function Rail({ permissions, partner = false }: { permissions: string[]; 
               item={{ href: settings[0].href, label: 'Settings', icon: SETTINGS_ICON, phase: 0, description: '' }}
               active={pathname.startsWith('/settings')}
               collapsed={collapsed}
+              large={drawer}
               href={settings[0].href}
             />
           </ul>
@@ -169,7 +174,7 @@ export function Rail({ permissions, partner = false }: { permissions: string[]; 
   );
 }
 
-function RailLink({ item, active, collapsed, href, badge, badgeLabel }: { item: NavItem; active: boolean; collapsed: boolean; href: string; badge?: number; badgeLabel?: string }) {
+function RailLink({ item, active, collapsed, href, badge, badgeLabel, large = false }: { item: NavItem; active: boolean; collapsed: boolean; href: string; badge?: number; badgeLabel?: string; large?: boolean }) {
   const Icon = item.icon;
   // Fixed-position tooltip so the scrolling rail does not clip it.
   const [tip, setTip] = useState<number | null>(null);
@@ -185,7 +190,8 @@ function RailLink({ item, active, collapsed, href, badge, badgeLabel }: { item: 
         aria-current={active ? 'page' : undefined}
         aria-label={collapsed ? `${item.label}${badge ? `, ${badge} ${badgeLabel ?? ''}` : ''}` : undefined}
         className={clsx(
-          'group display relative flex h-10 items-center gap-3 rounded-pill text-[16px] leading-none transition-colors duration-150',
+          'group display relative flex items-center gap-3 rounded-pill text-[16px] leading-none transition-colors duration-150',
+          large ? 'h-12 text-[17px]' : 'h-10',
           collapsed ? 'justify-center px-0' : 'px-3',
           active ? 'bg-canvas text-ink' : 'text-ink-secondary hover:bg-fog hover:text-ink'
         )}

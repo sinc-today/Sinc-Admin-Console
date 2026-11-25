@@ -147,7 +147,12 @@ export function InfoTip({ children, label = 'More information', className }: { c
             show();
           }
         }}
-        className={clsx('inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded-pill align-middle text-ink-muted transition-colors hover:bg-fog hover:text-ink', open && 'text-ink', className)}
+        className={clsx(
+          // 20px icon, 40px touch area (the ::after extends the hit box without moving anything).
+          'relative inline-flex size-5 shrink-0 cursor-help items-center justify-center rounded-pill align-middle text-ink-muted transition-colors after:absolute after:-inset-2.5 after:content-[""] hover:bg-fog hover:text-ink',
+          open && 'text-ink',
+          className
+        )}
       >
         <Info size={14} aria-hidden />
       </Popover.Trigger>
@@ -243,7 +248,7 @@ export function Panel({
   const caption = freshness && !chip && isShort(freshness) ? freshness.replace(/\.$/, '') : undefined;
   const tip = info ?? (freshness && !chip && !caption ? freshness : undefined);
   return (
-    <section className={clsx('relative rounded-panel bg-canvas p-6', className)} aria-label={title} aria-busy={busy || undefined}>
+    <section className={clsx('relative min-w-0 rounded-panel bg-canvas p-4 sm:p-6', className)} aria-label={title} aria-busy={busy || undefined}>
       <ProgressBar active={!!busy} className="rounded-t-panel" />
       {(title || actions || chip) && (
         <header className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -299,7 +304,7 @@ export function FeaturePanel({ children, tone = 'ash', className }: { children: 
   return (
     <section
       className={clsx(
-        'rounded-feature p-6',
+        'rounded-feature p-4 sm:p-6',
         tone === 'ash' && 'bg-ash',
         tone === 'ivory' && 'bg-ivory',
         tone === 'canvas' && 'bg-canvas',
@@ -430,4 +435,4 @@ export function Field({
 }
 
 export const inputClass =
-  'h-10 w-full border border-line-strong bg-canvas px-3 text-[14px] text-ink placeholder:text-ink-muted disabled:bg-fog disabled:text-ink-disabled aria-[invalid=true]:border-ember-ink';
+  'h-11 w-full border border-line-strong bg-canvas px-3 text-[16px] text-ink placeholder:text-ink-muted sm:h-10 sm:text-[14px] disabled:bg-fog disabled:text-ink-disabled aria-[invalid=true]:border-ember-ink';

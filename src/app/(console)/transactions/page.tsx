@@ -86,8 +86,8 @@ export default function TransactionsPage() {
         ) : items.length === 0 ? (
           <EmptyState title="No transactions match" body="Widen the dates or clear a filter." />
         ) : (
-          <div className={`relative -mx-6 max-h-[min(70dvh,900px)] overflow-auto transition-opacity ${q.isFetching && q.isPlaceholderData ? 'opacity-60' : ''}`}>
-            <table className="w-full min-w-[980px] border-collapse text-[13px]">
+          <div className={`relative -mx-4 sm:-mx-6 max-h-[min(70dvh,900px)] overflow-auto transition-opacity ${q.isFetching && q.isPlaceholderData ? 'opacity-60' : ''}`}>
+            <table className="rt w-full min-w-[980px] border-collapse text-[13px]">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-fog text-left text-[12px] text-ink-secondary">
                   <th scope="col" className="h-10 px-6 font-medium">Id</th>

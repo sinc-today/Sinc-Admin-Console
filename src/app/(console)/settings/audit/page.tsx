@@ -100,8 +100,8 @@ export default function AuditPage() {
         ) : items.length === 0 ? (
           <EmptyState title="Nothing recorded for these filters" body="Clear the filters to see everything." />
         ) : (
-          <div className="relative -mx-6 overflow-x-auto">
-            <table className="w-full min-w-[880px] border-collapse text-[13px]">
+          <div className="relative -mx-4 sm:-mx-6 overflow-x-auto">
+            <table className="rt w-full min-w-[880px] border-collapse text-[13px]">
               <thead>
                 <tr className="bg-fog text-left text-[12px] text-ink-secondary">
                   <th scope="col" className="h-10 px-6 font-medium">When</th>

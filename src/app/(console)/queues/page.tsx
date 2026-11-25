@@ -178,14 +178,19 @@ function QueueView({ queue, filter, setFilter, item, setItem }: { queue: string;
         ) : !items.length ? (
           <p className="py-8 text-center text-[13px] text-ink-muted">{search ? `Nothing matches “${search}”.` : "Nothing waiting here."}</p>
         ) : (
-          <ul ref={listRef} className="-mx-6 flex max-h-[70vh] flex-col overflow-y-auto" aria-label={`${items.length} items`}>
+          <ul ref={listRef} className="-mx-4 sm:-mx-6 flex max-h-[70vh] flex-col overflow-y-auto" aria-label={`${items.length} items`}>
             {items.map((it, i) => (
               <li key={it.key}>
                 <button
                   type="button"
-                  onClick={() => setItem(it.key)}
+                  onClick={() => {
+                    setItem(it.key);
+                    // Stacked layout (phones, small tablets): bring the item's details into view.
+                    if (window.matchMedia('(max-width: 1023px)').matches)
+                      requestAnimationFrame(() => document.getElementById('queue-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+                  }}
                   aria-current={i === idx ? 'true' : undefined}
-                  className={clsx('flex w-full flex-col gap-0.5 border-b border-line px-6 py-3 text-left', i === idx ? 'bg-fog' : 'hover:bg-fog')}
+                  className={clsx('flex w-full flex-col gap-0.5 border-b border-line px-4 py-3 sm:px-6 text-left', i === idx ? 'bg-fog' : 'hover:bg-fog')}
                 >
                   <span className="flex items-center gap-2">
                     {it.priority === 'high' && <span className="text-[11px] font-medium uppercase text-ember-ink">High</span>}
@@ -206,9 +211,11 @@ function QueueView({ queue, filter, setFilter, item, setItem }: { queue: string;
         <PagerBar pager={pager} noun="items" />
       </Panel>
       {selected && q.data ? (
+        <div id="queue-detail" className="min-w-0 scroll-mt-16">
         <Detail queue={queue} data={q.data} item={selected} onAssign={(to) => assign.mutate({ key: selected.key, to })} assigning={assign.isPending} />
+        </div>
       ) : (
-        <Panel>
+        <Panel className="hidden lg:block">
           <p className="py-8 text-center text-[13px] text-ink-muted">Select an item.</p>
         </Panel>
       )}

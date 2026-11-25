@@ -119,8 +119,8 @@ function StaffTable({ rows, roles, canManage }: { rows: StaffRow[]; roles: RoleR
       <ListSearch id="staff-q" value={q} onChange={setQ} placeholder="Name, email or role" label="Search staff" />
       {q && <span className="text-[12px] text-ink-muted">{matched} of {rows.length}</span>}
     </div>
-    <div className="relative -mx-6 overflow-x-auto">
-      <table className="w-full min-w-[820px] border-collapse text-[13px]">
+    <div className="relative -mx-4 sm:-mx-6 overflow-x-auto">
+      <table className="rt w-full min-w-[820px] border-collapse text-[13px]">
         <thead>
           <tr className="bg-fog text-left text-[12px] font-medium text-ink-secondary">
             <th scope="col" className="h-10 px-6 font-medium">Name</th>

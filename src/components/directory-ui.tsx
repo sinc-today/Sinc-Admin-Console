@@ -87,8 +87,8 @@ export function Table({ minWidth = 880, head, children, sticky, caption }: { min
   return (
     <>
       {caption && <p className="-mt-1 mb-2 text-[12px] text-ink-muted">{caption}</p>}
-      <div className={clsx('relative -mx-6 overflow-x-auto', sticky && 'max-h-[min(70dvh,900px)] overflow-y-auto')}>
-        <table className="w-full border-collapse text-[13px]" style={{ minWidth }}>
+      <div className={clsx('relative -mx-4 sm:-mx-6 overflow-x-auto', sticky && 'max-h-[min(70dvh,900px)] overflow-y-auto')}>
+        <table className="rt w-full border-collapse text-[13px]" style={{ minWidth }}>
           <thead className={clsx(sticky && 'sticky top-0 z-10')}>
             <tr className="bg-fog text-left text-[12px] text-ink-secondary">
               {head.map((h, i) => {

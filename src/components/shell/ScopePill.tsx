@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import * as Popover from '@radix-ui/react-popover';
 import clsx from 'clsx';
 import { CaretDown, Check, X } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import {
   COMPARE,
   COMPARE_LABELS,
@@ -21,8 +21,13 @@ import {
 const shortDate = (d: Date) => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(d);
 const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-/** The signature pill: Date range | Compare | Country | Currency. State lives in the URL. */
-export function ScopePill() {
+const Stacked = createContext(false);
+
+/**
+ * The signature pill: Date range | Compare | Country | Currency. State lives in the URL.
+ * `stacked` lays the same controls out as a full-width list (phones).
+ */
+export function ScopePill({ stacked = false }: { stacked?: boolean } = {}) {
   // The partner dashboard always covers the partner's own countries; only the dates apply there.
   const path = usePathname() ?? '';
   // Partner pages always cover the partner's own countries; only the dates (and comparison) apply there.
@@ -32,10 +37,11 @@ export function ScopePill() {
   const rangeLabel = scope.range === 'custom' ? `${shortDate(from)} to ${shortDate(to)}` : PRESET_LABELS[scope.range];
 
   return (
-    <div role="group" aria-label="Report scope" className="flex h-10 w-max items-center rounded-pill bg-canvas px-2">
+    <Stacked.Provider value={stacked}>
+    <div role="group" aria-label="Report scope" className={stacked ? 'flex w-[min(340px,calc(100vw-24px))] flex-col bg-canvas py-1' : 'flex h-10 w-max items-center rounded-pill bg-canvas px-2'}>
       <Segment label="Date range" value={rangeLabel} active={scope.range !== '30d'} hint={timeZone.replace('Africa/', '') + ' time'}>
         {(close) => (
-          <div className="w-[300px]">
+          <div className="w-[min(300px,calc(100vw-48px))]">
             <OptionList
               options={PRESETS.filter((p) => p !== 'custom').map((p) => ({ value: p, label: PRESET_LABELS[p] }))}
               selected={scope.range}
@@ -119,11 +125,13 @@ export function ScopePill() {
         </>
       )}
     </div>
+    </Stacked.Provider>
   );
 }
 
 function Divider() {
-  return <span aria-hidden className="mx-1 h-5 w-px bg-line-strong" />;
+  const stacked = useContext(Stacked);
+  return stacked ? <span aria-hidden className="mx-3 h-px bg-line" /> : <span aria-hidden className="mx-1 h-5 w-px bg-line-strong" />;
 }
 
 function Segment({
@@ -140,20 +148,29 @@ function Segment({
   children: (close: () => void) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const stacked = useContext(Stacked);
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger
         aria-label={`${label}: ${value}${hint ? `, ${hint}` : ''}`}
-        className="display flex h-8 items-center gap-1.5 rounded-pill px-3 text-[16px] leading-none text-ink hover:bg-fog data-[state=open]:bg-ash"
+        className={
+          stacked
+            ? 'flex h-12 w-full items-center justify-between gap-3 px-3 text-left text-[15px] text-ink hover:bg-fog data-[state=open]:bg-ash'
+            : 'display flex h-8 items-center gap-1.5 rounded-pill px-3 text-[16px] leading-none text-ink hover:bg-fog data-[state=open]:bg-ash'
+        }
       >
-        <span className={clsx('whitespace-nowrap', active && 'underline decoration-ember decoration-2 underline-offset-[6px]')}>{value}</span>
-        <CaretDown size={14} aria-hidden className="text-ink-muted" />
+        {stacked && <span className="text-[12px] font-medium text-ink-muted">{label}</span>}
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className={clsx('truncate whitespace-nowrap', active && 'underline decoration-ember decoration-2 underline-offset-[6px]')}>{value}</span>
+          <CaretDown size={14} aria-hidden className="shrink-0 text-ink-muted" />
+        </span>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
           align="start"
           sideOffset={8}
-          className="z-50 min-w-[220px] border border-line-strong bg-canvas py-2 text-[14px] text-ink"
+          collisionPadding={12}
+          className="z-50 max-h-[min(70dvh,520px)] min-w-[220px] max-w-[calc(100vw-24px)] overflow-y-auto border border-line-strong bg-canvas py-2 text-[14px] text-ink"
           style={{ borderRadius: 0 }}
         >
           <p className="px-3 pb-2 text-[12px] font-medium text-ink-muted">{label}</p>
@@ -184,7 +201,7 @@ function OptionList({
               role="option"
               aria-selected={isSelected}
               onClick={() => onSelect(o.value)}
-              className={clsx('flex h-9 w-full items-center justify-between px-3 text-left hover:bg-fog', isSelected && 'bg-fog')}
+              className={clsx('flex h-11 w-full sm:h-9 items-center justify-between px-3 text-left hover:bg-fog', isSelected && 'bg-fog')}
             >
               {o.label}
               {isSelected && <Check size={16} aria-hidden />}
