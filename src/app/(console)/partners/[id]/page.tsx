@@ -1,5 +1,7 @@
 'use client';
 
+import { NumberInput } from '@/components/NumberInput';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AccountPicker } from '@/components/AccountPicker';
 import Link from 'next/link';
@@ -29,6 +31,8 @@ interface Detail {
   countries: string[];
   status: 'active' | 'suspended' | 'removed';
   contactEmail: string | null;
+  /** Commission range (whole %) the partner may set for organizers in their countries; null = they can't change it. */
+  commissionRange?: { min: number; max: number } | null;
   note: string | null;
   account: Account | null;
   terms: Terms[];
@@ -517,12 +521,15 @@ function RetryFailed({ id, count }: { id: number; count: number }) {
 
 function EditPartner({ p }: { p: Detail }) {
   const qc = useQueryClient();
-  const [f, setF] = useState({ name: p.name, account: p.account ? String(p.account.id) : '', contactEmail: p.contactEmail ?? '', status: p.status, reason: '' });
+  const [f, setF] = useState({ name: p.name, account: p.account ? String(p.account.id) : '', contactEmail: p.contactEmail ?? '', status: p.status, cMin: p.commissionRange ? String(p.commissionRange.min) : '', cMax: p.commissionRange ? String(p.commissionRange.max) : '', reason: '' });
+  // Both empty = the partner can't change commission; otherwise both whole numbers, min ≤ max.
+  const rangeOff = f.cMin === '' && f.cMax === '';
+  const rangeOk = rangeOff || (/^\d{1,3}$/.test(f.cMin) && /^\d{1,3}$/.test(f.cMax) && Number(f.cMin) <= Number(f.cMax) && Number(f.cMax) <= 100);
   const m = useMutation({
     mutationFn: () =>
       api<{ released: number }>(`/partners/${p.id}`, {
         method: 'PATCH',
-        json: { name: f.name, payoutOrganizerProfileId: f.account ? Number(f.account) : null, contactEmail: f.contactEmail || null, status: f.status, reason: f.reason },
+        json: { name: f.name, payoutOrganizerProfileId: f.account ? Number(f.account) : null, contactEmail: f.contactEmail || null, status: f.status, commissionRange: rangeOff ? null : { min: Number(f.cMin), max: Number(f.cMax) }, reason: f.reason },
       }),
     meta: { success: 'Partner saved' },
     onSuccess: () => {
@@ -555,6 +562,24 @@ function EditPartner({ p }: { p: Detail }) {
             <option value="suspended">Suspended</option>
           </select>
         </Field>
+        <fieldset className="md:col-span-2">
+          <legend className="mb-1.5 text-[12px] font-medium text-ink-secondary">Commission the partner may set for organizers</legend>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="From (%)" htmlFor="ep-cmin">
+              <NumberInput id="ep-cmin" min={0} max={100} step={1} className={inputClass} value={f.cMin} onValue={(t) => setF({ ...f, cMin: t })} />
+            </Field>
+            <Field label="To (%)" htmlFor="ep-cmax">
+              <NumberInput id="ep-cmax" min={0} max={100} step={1} className={inputClass} value={f.cMax} onValue={(t) => setF({ ...f, cMax: t })} />
+            </Field>
+          </div>
+          <p className={`mt-1.5 text-[12px] ${rangeOk ? 'text-ink-muted' : 'text-ember-ink'}`}>
+            {rangeOk
+              ? rangeOff
+                ? 'Empty: the partner cannot change commission. Their share grows with it, so keep the range tight.'
+                : `The partner's owner and finance users can set ${f.cMin}% to ${f.cMax}%, never while an organizer has an event taking payments.`
+              : 'Use whole numbers from 0 to 100, "from" no higher than "to", or leave both empty.'}
+          </p>
+        </fieldset>
         <div className="md:col-span-2">
           <Field label="Reason (audit log)" htmlFor="ep-reason">
             <input id="ep-reason" required minLength={5} className={inputClass} value={f.reason} onChange={set('reason')} placeholder="e.g. New payout account" />
@@ -562,7 +587,7 @@ function EditPartner({ p }: { p: Detail }) {
         </div>
         {m.error && <p className="text-[12px] text-ember-ink md:col-span-2">{(m.error as Error).message}</p>}
         <div className="flex gap-2 md:col-span-2">
-          <Button type="submit" loading={m.isPending}>
+          <Button type="submit" loading={m.isPending} disabled={!rangeOk}>
             Save details
           </Button>
         </div>

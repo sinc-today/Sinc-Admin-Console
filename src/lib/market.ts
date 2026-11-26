@@ -17,6 +17,7 @@ const MARKET_PERMISSION: Record<string, string> = {
   'analytics.read': 'market.read',
   'organizers.read': 'market.read',
   'organizers.verify': 'market.organizers.verify',
+  'organizers.commission': 'market.commission',
   'tickets.resend': 'market.tickets.resend',
   'posts.moderate': 'market.posts.moderate',
   'money.read': 'market.transactions.read',

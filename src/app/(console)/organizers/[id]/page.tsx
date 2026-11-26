@@ -19,7 +19,7 @@ import { api, ApiError } from '@/lib/api';
 import { formatRelative } from '@/lib/format';
 import { PagerBar, useCursorPager } from '@/components/pager';
 import { OrganizerTeam } from '@/components/OrganizerTeam';
-import { OrganizerCommissionPanel, type OrganizerPlan } from '@/components/OrganizerCommission';
+import { OrganizerCommissionPanel, type OrganizerCommissionInfo, type OrganizerPlan } from '@/components/OrganizerCommission';
 import { useCan } from '../../me-context';
 
 interface Org360 {
@@ -30,6 +30,7 @@ interface Org360 {
   money: { currency: string; gmv: number; payments: number; commission: number | null; commissionApproximate?: boolean; takeRate: number | null; failed: number; withdrawn: number; points: { t: string; v: number }[] };
   wallets: { currency: string; provider: string | null; balance: number; status: string | null }[];
   plan?: OrganizerPlan | null;
+  commission?: OrganizerCommissionInfo;
   commissionRequests: { id: number; status: string; percentage: number; reason: string | null; createdAt: string }[];
   recentTransactions: { id: number; createdAt: string; amount: number; currency: string; status: string; transactionType: string; correspondent: string | null }[];
 }
@@ -141,7 +142,7 @@ export default function OrganizerPage() {
               </ul>
             )}
           </Panel>
-          <OrganizerCommissionPanel organizerId={o.id} plan={d.plan ?? null} />
+          <OrganizerCommissionPanel organizerId={o.id} plan={d.plan ?? null} commission={d.commission} />
           <OrganizerDocumentsPanel organizerId={o.id} />
           <OrganizerTeam organizerId={o.id} />
           <Panel title="Commission rate requests">
