@@ -43,7 +43,7 @@ export function IncomeTab() {
         </p>
       )}
       <section aria-label="Key numbers" className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
-        <BigNumber label="Gross commission" value={d ? fmt('money', d.totals.commission, cur, true) : '…'} sub={d ? `${fmt('ratio', d.totals.takeRate)} of ${fmt('money', d.totals.gross, cur, true)} GMV` : undefined} />
+        <BigNumber label="Gross commission" value={d ? fmt('money', d.totals.commission, cur, true) : '…'} sub={d ? `${fmt('ratio', d.totals.takeRate)} of ${fmt('money', d.totals.gross, cur, true)} in sales` : undefined} />
         <BigNumber label="Aggregator fees" value={d ? fmt('money', d.totals.fee, cur, true) : '…'} sub={d ? `${fmt('ratio', d.totals.feeShareOfCommission)} of commission` : undefined} />
         <BigNumber
           label={d && d.totals.partnerShares + d.totals.blockerShares > 0 ? 'Sinc keeps' : 'Net commission'}

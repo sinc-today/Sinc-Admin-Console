@@ -56,7 +56,7 @@ export const NAV: NavGroup[] = [
   {
     label: 'Home',
     items: [
-      { href: '/', label: 'Overview', icon: ChartLineUp, permission: 'analytics.read', phase: 0, description: 'GMV, commission revenue, tickets, payment success, signups and active users.' },
+      { href: '/', label: 'Overview', icon: ChartLineUp, permission: 'analytics.read', phase: 0, description: 'GMV, net commission, tickets, payment success, signups and active users.' },
       { href: '/live', label: 'Live', icon: Broadcast, permission: 'analytics.read', phase: 0, description: 'Orders, payments and scans as they happen.' },
     ],
   },

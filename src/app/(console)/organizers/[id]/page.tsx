@@ -27,7 +27,7 @@ interface Org360 {
   owner: { id: number; name: string | null; username: string; email: string | null; imageUrl?: string | null } | null;
   members: { userId: number | null; name: string | null; email: string | null; isOwner: boolean; isActive: boolean; imageUrl?: string | null }[];
   events: { total: number; upcoming: number; live: number; recent: { id: number; name: string; startDate: string; endDate: string; country: string | null; sold: number; capacity: number }[] };
-  money: { currency: string; gmv: number; payments: number; commission: number | null; takeRate: number | null; failed: number; withdrawn: number; points: { t: string; v: number }[] };
+  money: { currency: string; gmv: number; payments: number; commission: number | null; commissionApproximate?: boolean; takeRate: number | null; failed: number; withdrawn: number; points: { t: string; v: number }[] };
   wallets: { currency: string; provider: string | null; balance: number; status: string | null }[];
   plan?: OrganizerPlan | null;
   commissionRequests: { id: number; status: string; percentage: number; reason: string | null; createdAt: string }[];
@@ -109,8 +109,8 @@ export default function OrganizerPage() {
             // Sinc's revenue: Finance and Operations only.
             ...(canRevenue
               ? [
-                  { label: 'Commission', value: fmt('money', m.commission, m.currency, true) },
-                  { label: 'Take rate', value: fmt('ratio', m.takeRate) },
+                  { label: m.commissionApproximate ? 'Net commission (approx.)' : 'Net commission', value: fmt('money', m.commission, m.currency, true) },
+                  { label: 'Net take rate', value: fmt('ratio', m.takeRate) },
                 ]
               : []),
             { label: 'Failed payments', value: fmt('count', m.failed) },

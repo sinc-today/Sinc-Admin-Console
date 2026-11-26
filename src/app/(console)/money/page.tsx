@@ -280,6 +280,7 @@ interface RevenueData {
   commission: Kpi;
   takeRate: number | null;
   otherCharges: Kpi;
+  partners: { operatorShares: number; blockerShares: number; sales: number; sincKeeps: number | null };
   otherByType: { type: string; amount: number; count: number }[];
   series: Series;
   topOrganizers: { id: number | null; name: string; amount: number }[];
@@ -292,19 +293,26 @@ function Revenue() {
   const d = q.data;
   return (
     <>
-      <section aria-label="Key numbers" className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+      <section aria-label="Key numbers" className={`grid grid-cols-1 gap-5 sm:grid-cols-2 ${d?.partners.sales ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>
         <MetricTile kpi={d?.commission} compareLabel={cmpLabelFor(compare)} />
-        <StatTile label="Take rate" value={d ? fmt('ratio', d.takeRate) : undefined} note="Commission revenue ÷ GMV." />
+        {!!d?.partners.sales && (
+          <StatTile
+            label="Sinc keeps"
+            value={fmt('money', d.partners.sincKeeps, currency)}
+            note={`After ${fmt('money', d.partners.operatorShares + d.partners.blockerShares, currency)} to licence partners${d.partners.blockerShares ? ` (${fmt('money', d.partners.blockerShares, currency)} to blockers)` : ''} on ${fmt('count', d.partners.sales)} sales.`}
+          />
+        )}
+        <StatTile label="Net take rate" value={d ? fmt('ratio', d.takeRate) : undefined} note="Net commission on provider payments ÷ GMV. Gross commission and fees are under Income & expenses." />
         <MetricTile kpi={d?.otherCharges} compareLabel={cmpLabelFor(compare)} />
       </section>
-      <QueryPanel title="Commission revenue per day" freshness={freshnessLabel(d?.freshness)} query={q}>
+      <QueryPanel title="Net commission per day" freshness={freshnessLabel(d?.freshness)} query={q}>
         {(x) => <TrendChart series={x.series} compareLabel={COMPARE_LABELS[compare]} height={260} />}
       </QueryPanel>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[3fr_2fr]">
-        <QueryPanel title="Commission by organizer" query={q} skeleton="list">
+        <QueryPanel title="Net commission by organizer" query={q} skeleton="list" info="Exact per sale from the day sales report their split; before that, from the organizer owner who paid it (shared by GMV when one owner has several organizers).">
           {(x) => <BarList rows={x.topOrganizers.map((o) => ({ label: o.name, value: o.amount }))} unit="money" currency={currency} empty="No commission collected in this period." />}
         </QueryPanel>
-        <QueryPanel title="Other platform charges" query={q} skeleton="list" info="Plan, message and event-post payments. Shown for context; not counted as revenue.">
+        <QueryPanel title="Other platform charges" query={q} skeleton="list" info="Plan, message and event-post payments credited to Sinc, each counted once. Shown for context; not counted as commission.">
           {(x) => <BarList rows={x.otherByType.map((o) => ({ label: humanize(o.type), value: o.amount, sub: `${o.count}` }))} unit="money" currency={currency} empty="No other charges." />}
         </QueryPanel>
       </div>
